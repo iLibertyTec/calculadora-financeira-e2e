@@ -3,19 +3,28 @@ import {
   assertEquals,
   assertThrows,
 } from "@std/assert";
-import { calculatePriceSchedule, type PriceInstallment } from "./price.ts";
+import {
+  calculatePriceSchedule,
+  type Money,
+  type PriceInstallment,
+  type PriceSchedule,
+} from "./price.ts";
 
-function roundCurrency(value: number): number {
+function roundCurrency(value: number): Money {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 function assertScheduleInvariants(
-  installments: PriceInstallment[],
-  principal: number,
+  schedule: PriceSchedule,
 ): void {
-  let previousBalance: number = principal;
+  const { installments, summary } = schedule;
+  let previousBalance: number = summary.principal;
 
   for (const installment of installments) {
+    assert(Number.isFinite(installment.payment));
+    assert(Number.isFinite(installment.interest));
+    assert(Number.isFinite(installment.amortization));
+    assert(Number.isFinite(installment.balance));
     assertEquals(
       installment.payment,
       roundCurrency(installment.interest + installment.amortization),
@@ -36,9 +45,30 @@ function assertScheduleInvariants(
       0,
     ),
   );
+  const totalPaid: number = roundCurrency(
+    installments.reduce(
+      (sum: number, installment: PriceInstallment) => {
+        return sum + installment.payment;
+      },
+      0,
+    ),
+  );
+  const totalInterest: number = roundCurrency(
+    installments.reduce(
+      (sum: number, installment: PriceInstallment) => {
+        return sum + installment.interest;
+      },
+      0,
+    ),
+  );
 
-  assertEquals(totalAmortization, roundCurrency(principal));
+  assertEquals(totalAmortization, summary.principal);
+  assertEquals(totalPaid, summary.totalPaid);
+  assertEquals(totalInterest, summary.totalInterest);
   assertEquals(installments.at(-1)?.balance, 0);
+  assert(Number.isFinite(summary.monthlyPayment));
+  assert(Number.isFinite(summary.totalPaid));
+  assert(Number.isFinite(summary.totalInterest));
 }
 
 Deno.test("calculatePriceSchedule generates Price schedule with known payment", () => {
@@ -72,7 +102,7 @@ Deno.test("calculatePriceSchedule generates Price schedule with known payment", 
 
   assertEquals(result.summary.totalPaid, 1066.19);
   assertEquals(result.summary.totalInterest, 66.19);
-  assertScheduleInvariants(result.installments, result.summary.principal);
+  assertScheduleInvariants(result);
 });
 
 Deno.test("calculatePriceSchedule supports zero rate", () => {
@@ -99,7 +129,25 @@ Deno.test("calculatePriceSchedule supports zero rate", () => {
     amortization: 100,
     balance: 0,
   });
-  assertScheduleInvariants(result.installments, result.summary.principal);
+  assertScheduleInvariants(result);
+});
+
+Deno.test("calculatePriceSchedule keeps summary monthlyPayment as theoretical fixed installment and may adjust last payment", () => {
+  const result = calculatePriceSchedule({
+    principal: 1000,
+    monthlyRate: 0.01,
+    termMonths: 12,
+  });
+
+  const nonFinalPayments: number[] = result.installments.slice(0, -1).map((
+    installment: PriceInstallment,
+  ) => installment.payment);
+
+  assert(nonFinalPayments.every((payment: number) => payment === 88.85));
+  assertEquals(result.summary.monthlyPayment, 88.85);
+  assertEquals(result.installments[11]?.payment, 88.84);
+  assert(result.installments[11]!.payment <= result.summary.monthlyPayment);
+  assertScheduleInvariants(result);
 });
 
 Deno.test("calculatePriceSchedule closes totals from final installments in longer term", () => {
@@ -135,7 +183,7 @@ Deno.test("calculatePriceSchedule closes totals from final installments in longe
       ).toFixed(2),
     ),
   );
-  assertScheduleInvariants(result.installments, result.summary.principal);
+  assertScheduleInvariants(result);
 });
 
 Deno.test("calculatePriceSchedule handles very small non-zero rate and finishes at zero balance", () => {
@@ -157,7 +205,7 @@ Deno.test("calculatePriceSchedule handles very small non-zero rate and finishes 
   assertEquals(result.summary.totalPaid, totalPaid);
   assertEquals(result.installments[0]?.payment, 41.72);
   assertEquals(result.installments[23]?.payment, 41.65);
-  assertScheduleInvariants(result.installments, result.summary.principal);
+  assertScheduleInvariants(result);
 });
 
 Deno.test("calculatePriceSchedule preserves invariants with cent values and one-month term", () => {
@@ -177,7 +225,7 @@ Deno.test("calculatePriceSchedule preserves invariants with cent values and one-
   });
   assertEquals(result.summary.totalPaid, 1265.42);
   assertEquals(result.summary.totalInterest, 30.86);
-  assertScheduleInvariants(result.installments, result.summary.principal);
+  assertScheduleInvariants(result);
 });
 
 Deno.test("calculatePriceSchedule validates input", () => {
@@ -212,5 +260,27 @@ Deno.test("calculatePriceSchedule validates input", () => {
       }),
     Error,
     "termMonths must be a positive integer",
+  );
+
+  assertThrows(
+    () =>
+      calculatePriceSchedule({
+        principal: Number.NaN,
+        monthlyRate: 0.01,
+        termMonths: 12,
+      }),
+    Error,
+    "principal must be a positive number",
+  );
+
+  assertThrows(
+    () =>
+      calculatePriceSchedule({
+        principal: 1000,
+        monthlyRate: Number.POSITIVE_INFINITY,
+        termMonths: 12,
+      }),
+    Error,
+    "monthlyRate must be a non-negative number",
   );
 });

@@ -1,18 +1,20 @@
+export type Money = number;
+
 export interface PriceInstallment {
   period: number;
-  payment: number;
-  interest: number;
-  amortization: number;
-  balance: number;
+  payment: Money;
+  interest: Money;
+  amortization: Money;
+  balance: Money;
 }
 
 export interface PriceScheduleSummary {
-  principal: number;
+  principal: Money;
   monthlyRate: number;
   termMonths: number;
-  monthlyPayment: number;
-  totalPaid: number;
-  totalInterest: number;
+  monthlyPayment: Money;
+  totalPaid: Money;
+  totalInterest: Money;
 }
 
 export interface PriceSchedule {
@@ -26,8 +28,16 @@ export interface CalculatePriceScheduleInput {
   termMonths: number;
 }
 
-function roundCurrency(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+const BALANCE_TOLERANCE: number = 0.01;
+
+function roundCurrency(value: number): Money {
+  const rounded: number = Math.round((value + Number.EPSILON) * 100) / 100;
+
+  if (!Number.isFinite(rounded)) {
+    throw new Error("calculation produced a non-finite monetary value");
+  }
+
+  return rounded;
 }
 
 export function calculatePriceSchedule(
@@ -47,47 +57,46 @@ export function calculatePriceSchedule(
     throw new Error("termMonths must be a positive integer");
   }
 
+  const roundedPrincipal: Money = roundCurrency(principal);
   const rawPayment: number = monthlyRate === 0
     ? principal / termMonths
     : principal * monthlyRate / (1 - Math.pow(1 + monthlyRate, -termMonths));
-  const monthlyPayment: number = roundCurrency(rawPayment);
+  const monthlyPayment: Money = roundCurrency(rawPayment);
 
   const installments: PriceInstallment[] = [];
-  let remainingBalance: number = principal;
+  let remainingBalance: Money = roundedPrincipal;
 
   for (let period = 1; period <= termMonths; period += 1) {
-    const interest: number = roundCurrency(remainingBalance * monthlyRate);
     const isLastPeriod: boolean = period === termMonths;
+    const interest: Money = roundCurrency(remainingBalance * monthlyRate);
 
-    let payment: number = monthlyPayment;
-    let amortization: number = roundCurrency(payment - interest);
-    let nextBalance: number = remainingBalance - amortization;
+    let payment: Money = monthlyPayment;
+    let amortization: Money = roundCurrency(payment - interest);
+    let nextBalance: Money = roundCurrency(remainingBalance - amortization);
 
-    if (isLastPeriod || nextBalance <= 0.005) {
-      amortization = roundCurrency(remainingBalance);
+    if (isLastPeriod || nextBalance <= BALANCE_TOLERANCE) {
+      amortization = remainingBalance;
       payment = roundCurrency(interest + amortization);
       nextBalance = 0;
     }
-
-    const balance: number = roundCurrency(nextBalance);
 
     installments.push({
       period,
       payment,
       interest,
       amortization,
-      balance,
+      balance: nextBalance,
     });
 
     remainingBalance = nextBalance;
   }
 
-  const totalPaid: number = roundCurrency(
+  const totalPaid: Money = roundCurrency(
     installments.reduce((sum: number, installment: PriceInstallment) => {
       return sum + installment.payment;
     }, 0),
   );
-  const totalInterest: number = roundCurrency(
+  const totalInterest: Money = roundCurrency(
     installments.reduce((sum: number, installment: PriceInstallment) => {
       return sum + installment.interest;
     }, 0),
@@ -95,7 +104,7 @@ export function calculatePriceSchedule(
 
   return {
     summary: {
-      principal: roundCurrency(principal),
+      principal: roundedPrincipal,
       monthlyRate,
       termMonths,
       monthlyPayment,
