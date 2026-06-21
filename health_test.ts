@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { handler } from "./main.ts";
+import { app } from "./main.ts";
 import { SERVICE_INFO } from "./src/service_info.ts";
 
 type HealthResponse = {
@@ -9,9 +9,7 @@ type HealthResponse = {
 };
 
 Deno.test("GET /health returns the service contract", async () => {
-  const req = new Request("http://localhost/health");
-
-  const res = await handler(req);
+  const res = await app.fetch(new Request("http://localhost/health"));
   const body = await res.json() as HealthResponse;
 
   assertEquals(res.status, 200);
