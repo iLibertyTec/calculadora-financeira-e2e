@@ -22,9 +22,8 @@ Deno.test("GET /health returns the service contract via handler", async () => {
   });
 });
 
-Deno.test("GET /health returns the service contract via app.handler()", async () => {
-  const freshHandler = app.handler();
-  const res = await freshHandler(new Request("http://localhost/health"));
+Deno.test("GET /health returns the service contract via app handler wiring", async () => {
+  const res = await app.handler()(new Request("http://localhost/health"));
   const body = await res.json() as HealthResponse;
 
   assertEquals(res.status, 200);

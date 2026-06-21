@@ -1,3 +1,4 @@
+import { Handlers } from "$fresh/server.ts";
 import { SERVICE_INFO } from "../src/service_info.ts";
 
 type HealthResponse = {
@@ -6,16 +7,20 @@ type HealthResponse = {
   version: string;
 };
 
-export function GET(): Response {
-  const body: HealthResponse = {
-    ok: true,
-    service: SERVICE_INFO.name,
-    version: SERVICE_INFO.version,
-  };
+export const handler: Handlers = {
+  GET() {
+    const body: HealthResponse = {
+      ok: true,
+      service: SERVICE_INFO.name,
+      version: SERVICE_INFO.version,
+    };
 
-  return Response.json(body, {
-    headers: {
-      "cache-control": "no-store",
-    },
-  });
-}
+    return new Response(JSON.stringify(body), {
+      status: 200,
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "no-store",
+      },
+    });
+  },
+};
