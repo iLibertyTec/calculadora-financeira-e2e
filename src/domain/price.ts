@@ -28,8 +28,6 @@ export interface CalculatePriceScheduleInput {
   termMonths: number;
 }
 
-const BALANCE_TOLERANCE: number = 0.01;
-
 function roundCurrency(value: number): Money {
   const rounded: number = Math.round((value + Number.EPSILON) * 100) / 100;
 
@@ -59,22 +57,21 @@ export function calculatePriceSchedule(
 
   const roundedPrincipal: Money = roundCurrency(principal);
   const rawPayment: number = monthlyRate === 0
-    ? principal / termMonths
-    : principal * monthlyRate / (1 - Math.pow(1 + monthlyRate, -termMonths));
+    ? roundedPrincipal / termMonths
+    : roundedPrincipal * monthlyRate /
+      (1 - Math.pow(1 + monthlyRate, -termMonths));
   const monthlyPayment: Money = roundCurrency(rawPayment);
 
   const installments: PriceInstallment[] = [];
   let remainingBalance: Money = roundedPrincipal;
 
   for (let period = 1; period <= termMonths; period += 1) {
-    const isLastPeriod: boolean = period === termMonths;
     const interest: Money = roundCurrency(remainingBalance * monthlyRate);
-
     let payment: Money = monthlyPayment;
     let amortization: Money = roundCurrency(payment - interest);
     let nextBalance: Money = roundCurrency(remainingBalance - amortization);
 
-    if (isLastPeriod || nextBalance <= BALANCE_TOLERANCE) {
+    if (nextBalance < 0 || period === termMonths) {
       amortization = remainingBalance;
       payment = roundCurrency(interest + amortization);
       nextBalance = 0;

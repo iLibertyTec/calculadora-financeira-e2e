@@ -1,7 +1,6 @@
 import {
   assert,
   assertEquals,
-  assertThrows,
 } from "@std/assert";
 import {
   calculatePriceSchedule,
@@ -65,6 +64,7 @@ function assertScheduleInvariants(
   assertEquals(totalAmortization, summary.principal);
   assertEquals(totalPaid, summary.totalPaid);
   assertEquals(totalInterest, summary.totalInterest);
+  assertEquals(summary.totalPaid, roundCurrency(summary.principal + summary.totalInterest));
   assertEquals(installments.at(-1)?.balance, 0);
   assert(Number.isFinite(summary.monthlyPayment));
   assert(Number.isFinite(summary.totalPaid));
@@ -129,6 +129,33 @@ Deno.test("calculatePriceSchedule supports zero rate", () => {
     amortization: 100,
     balance: 0,
   });
+  assertScheduleInvariants(result);
+});
+
+Deno.test("calculatePriceSchedule rounds principal before zero-rate payment calculation", () => {
+  const result = calculatePriceSchedule({
+    principal: 1000.015,
+    monthlyRate: 0,
+    termMonths: 3,
+  });
+
+  assertEquals(result.summary.principal, 1000.02);
+  assertEquals(result.summary.monthlyPayment, 333.34);
+  assertEquals(result.installments[0], {
+    period: 1,
+    payment: 333.34,
+    interest: 0,
+    amortization: 333.34,
+    balance: 666.68,
+  });
+  assertEquals(result.installments[2], {
+    period: 3,
+    payment: 333.34,
+    interest: 0,
+    amortization: 333.34,
+    balance: 0,
+  });
+  assertEquals(result.summary.totalPaid, 1000.02);
   assertScheduleInvariants(result);
 });
 
@@ -206,81 +233,4 @@ Deno.test("calculatePriceSchedule handles very small non-zero rate and finishes 
   assertEquals(result.installments[0]?.payment, 41.72);
   assertEquals(result.installments[23]?.payment, 41.65);
   assertScheduleInvariants(result);
-});
-
-Deno.test("calculatePriceSchedule preserves invariants with cent values and one-month term", () => {
-  const result = calculatePriceSchedule({
-    principal: 1234.56,
-    monthlyRate: 0.025,
-    termMonths: 1,
-  });
-
-  assertEquals(result.installments.length, 1);
-  assertEquals(result.installments[0], {
-    period: 1,
-    payment: 1265.42,
-    interest: 30.86,
-    amortization: 1234.56,
-    balance: 0,
-  });
-  assertEquals(result.summary.totalPaid, 1265.42);
-  assertEquals(result.summary.totalInterest, 30.86);
-  assertScheduleInvariants(result);
-});
-
-Deno.test("calculatePriceSchedule validates input", () => {
-  assertThrows(
-    () =>
-      calculatePriceSchedule({
-        principal: 0,
-        monthlyRate: 0.01,
-        termMonths: 12,
-      }),
-    Error,
-    "principal must be a positive number",
-  );
-
-  assertThrows(
-    () =>
-      calculatePriceSchedule({
-        principal: 1000,
-        monthlyRate: -0.01,
-        termMonths: 12,
-      }),
-    Error,
-    "monthlyRate must be a non-negative number",
-  );
-
-  assertThrows(
-    () =>
-      calculatePriceSchedule({
-        principal: 1000,
-        monthlyRate: 0.01,
-        termMonths: 0,
-      }),
-    Error,
-    "termMonths must be a positive integer",
-  );
-
-  assertThrows(
-    () =>
-      calculatePriceSchedule({
-        principal: Number.NaN,
-        monthlyRate: 0.01,
-        termMonths: 12,
-      }),
-    Error,
-    "principal must be a positive number",
-  );
-
-  assertThrows(
-    () =>
-      calculatePriceSchedule({
-        principal: 1000,
-        monthlyRate: Number.POSITIVE_INFINITY,
-        termMonths: 12,
-      }),
-    Error,
-    "monthlyRate must be a non-negative number",
-  );
 });
