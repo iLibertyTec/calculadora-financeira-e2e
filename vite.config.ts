@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
-import fresh from "vite-plugin-fresh";
+import fresh from "@fresh/plugin-vite";
+import config from "./fresh.config.ts";
 
 export default defineConfig({
-  plugins: [fresh()],
+  plugins: [fresh(config)],
 });
