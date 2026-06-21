@@ -18,6 +18,7 @@ Deno.test("AppChrome renderiza estrutura básica do layout", () => {
   assertStringIncludes(html, "Conteúdo");
   assertStringIncludes(html, 'href="#conteudo-principal"');
   assertStringIncludes(html, 'id="conteudo-principal"');
+  assertStringIncludes(html, "content-stack");
 });
 
 Deno.test("AppChrome aceita conteúdo customizado de chrome", () => {

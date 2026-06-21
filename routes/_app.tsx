@@ -82,6 +82,7 @@ const GLOBAL_STYLES: string = `
     border-radius: 0.75rem;
     box-shadow: var(--shadow-soft);
     z-index: 100;
+    max-width: calc(100vw - 1rem);
   }
 
   .skip-link:focus,
@@ -145,7 +146,14 @@ const GLOBAL_STYLES: string = `
     min-width: 0;
   }
 
-  .site-main > .container > * {
+  .content-stack {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+
+  .content-stack > * {
+    min-width: 0;
     max-width: 100%;
   }
 
@@ -222,6 +230,7 @@ const GLOBAL_STYLES: string = `
       left: 0.375rem;
       right: 0.375rem;
       width: auto;
+      max-width: calc(100vw - 0.75rem);
       text-align: center;
     }
 
@@ -238,7 +247,6 @@ const GLOBAL_STYLES: string = `
     }
 
     .site-description,
-    .site-main,
     .site-footer .container {
       font-size: 0.95rem;
     }
@@ -252,18 +260,26 @@ const GLOBAL_STYLES: string = `
   }
 `;
 
+function getDocumentTitle(props: PageProps): string {
+  const routeTitle: string | undefined = props.route?.title;
+  return routeTitle ? `${routeTitle} | Calculadora Financeira` : "Calculadora Financeira";
+}
+
 export default function App(props: PageProps): JSX.Element {
+  const title: string = getDocumentTitle(props);
+  const Page = props.Component;
+
   return (
     <html lang="pt-BR">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Calculadora Financeira</title>
+        <title>{title}</title>
         <style>{GLOBAL_STYLES}</style>
       </head>
       <body>
         <AppChrome>
-          <props.Component {...props} />
+          <Page data={props.data} url={props.url} route={props.route} />
         </AppChrome>
       </body>
     </html>
