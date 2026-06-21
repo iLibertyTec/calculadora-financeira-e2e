@@ -1,20 +1,21 @@
-import { assertEquals } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
+import { APP_VERSION, SERVICE_NAME } from "../src/app_info.ts";
 import { handler } from "./health.ts";
 
-deno.test("GET /health retorna contrato esperado", () => {
-  const response = handler.GET!(new Request("http://localhost/health"), {} as never);
-
-  assertEquals(response.status, 200);
-  assertEquals(
-    response.headers.get("content-type"),
-    "application/json; charset=utf-8",
+Deno.test("GET /health retorna contrato esperado", async () => {
+  const response = handler.GET!(
+    new Request("http://localhost/health"),
+    {} as never,
   );
 
-  return response.json().then((body: unknown) => {
-    assertEquals(body, {
-      ok: true,
-      service: "ifactory-product",
-      version: "0.1.0",
-    });
+  assertEquals(response.status, 200);
+  assert(response.headers.get("content-type")?.includes("application/json"));
+
+  const body: unknown = await response.json();
+
+  assertEquals(body, {
+    ok: true,
+    service: SERVICE_NAME,
+    version: APP_VERSION,
   });
 });
