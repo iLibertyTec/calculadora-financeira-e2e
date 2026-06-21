@@ -2,16 +2,28 @@ import { assert, assertEquals } from "@std/assert";
 import { APP_VERSION, SERVICE_NAME } from "../src/app_info.ts";
 import { handler } from "./health.ts";
 
-Deno.test("rota /health exporta handler GET e retorna contrato esperado", async () => {
-  assert(handler.GET);
+async function requestHealth(method = "GET"): Promise<Response> {
+  const routeHandler = handler[method as keyof typeof handler];
 
-  const response = await handler.GET!(
-    new Request("http://localhost/health", { method: "GET" }),
+  if (typeof routeHandler !== "function") {
+    throw new Error(`Método ${method} não suportado pela rota /health`);
+  }
+
+  return await routeHandler(
+    new Request("http://localhost/health", { method }),
     {} as never,
   );
+}
+
+Deno.test("GET /health retorna contrato público esperado", async () => {
+  const response = await requestHealth("GET");
 
   assertEquals(response.status, 200);
-  assert(response.headers.get("content-type")?.includes("application/json"));
+  assertEquals(
+    response.headers.get("content-type"),
+    "application/json; charset=utf-8",
+  );
+  assertEquals(response.headers.get("cache-control"), "no-store");
 
   const body: unknown = await response.json();
 
@@ -22,14 +34,22 @@ Deno.test("rota /health exporta handler GET e retorna contrato esperado", async 
   });
 });
 
-Deno.test("rota /health responde sem depender de layout global", async () => {
-  const response = await handler.GET!(
-    new Request("http://localhost/health", { method: "GET" }),
-    {} as never,
-  );
+Deno.test("/health expõe apenas GET no contrato da rota", () => {
+  assert(typeof handler.GET === "function");
+  assertEquals("POST" in handler, false);
+  assertEquals("PUT" in handler, false);
+  assertEquals("DELETE" in handler, false);
+});
 
-  assertEquals(
-    response.headers.get("content-type"),
-    "application/json; charset=utf-8",
-  );
+Deno.test("GET /health é estável e independe de ambiente", async () => {
+  const response = await requestHealth("GET");
+  const body: unknown = await response.json();
+
+  assertEquals(body, {
+    ok: true,
+    service: "ifactory-product",
+    version: "0.1.0",
+  });
+  assertEquals(SERVICE_NAME, "ifactory-product");
+  assertEquals(APP_VERSION, "0.1.0");
 });
