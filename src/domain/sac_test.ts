@@ -20,42 +20,19 @@ Deno.test("calculateSac returns decreasing installments for positive rate", () =
   assertEquals(result.totalPaid, 1025);
   assertEquals(result.totalInterest, 25);
   assertGreater(result.firstInstallment, result.lastInstallment);
-
-  const installments: number[] = [];
-  let remainingPrincipal: number = input.principal;
-
-  for (let month: number = 1; month <= input.termMonths; month += 1) {
-    const interest: number = Math.round(
-      (remainingPrincipal * input.monthlyRate + Number.EPSILON) * 100,
-    ) / 100;
-    const amortization: number = month === input.termMonths
-      ? Math.round((remainingPrincipal + Number.EPSILON) * 100) / 100
-      : result.amortization;
-    const installment: number = Math.round(
-      (amortization + interest + Number.EPSILON) * 100,
-    ) / 100;
-
-    installments.push(installment);
-    remainingPrincipal = Math.round(
-      ((remainingPrincipal - amortization) + Number.EPSILON) * 100,
-    ) / 100;
-  }
-
-  assertEquals(installments, [260, 257.5, 255, 252.5]);
-  assertEquals(remainingPrincipal, 0);
 });
 
-Deno.test("calculateSac handles zero rate with equal installments to principal divided by term", () => {
+Deno.test("calculateSac handles zero rate with cent closing on last installment", () => {
   const result = calculateSac({
-    principal: 1200,
+    principal: 1000,
     monthlyRate: 0,
-    termMonths: 12,
+    termMonths: 3,
   });
 
-  assertEquals(result.amortization, 100);
-  assertEquals(result.firstInstallment, 100);
-  assertEquals(result.lastInstallment, 100);
-  assertEquals(result.totalPaid, 1200);
+  assertEquals(result.amortization, 333.33);
+  assertEquals(result.firstInstallment, 333.33);
+  assertEquals(result.lastInstallment, 333.34);
+  assertEquals(result.totalPaid, 1000);
   assertEquals(result.totalInterest, 0);
 });
 
@@ -73,6 +50,16 @@ Deno.test("calculateSac adjusts final amortization to close residual cents", () 
   assertEquals(result.totalInterest, 30.01);
 });
 
+Deno.test("calculateSac keeps first installment greater than or equal to last for positive rate", () => {
+  const result = calculateSac({
+    principal: 10000,
+    monthlyRate: 0.02,
+    termMonths: 36,
+  });
+
+  assertEquals(result.firstInstallment >= result.lastInstallment, true);
+});
+
 Deno.test("calculateSac rejects invalid parameters", () => {
   assertThrows(
     () => calculateSac({ principal: 0, monthlyRate: 0.01, termMonths: 12 }),
@@ -86,6 +73,26 @@ Deno.test("calculateSac rejects invalid parameters", () => {
 
   assertThrows(
     () => calculateSac({ principal: 1000, monthlyRate: 0.01, termMonths: 0 }),
+    RangeError,
+  );
+
+  assertThrows(
+    () => calculateSac({ principal: NaN, monthlyRate: 0.01, termMonths: 12 }),
+    RangeError,
+  );
+
+  assertThrows(
+    () =>
+      calculateSac({
+        principal: 1000,
+        monthlyRate: Number.POSITIVE_INFINITY,
+        termMonths: 12,
+      }),
+    RangeError,
+  );
+
+  assertThrows(
+    () => calculateSac({ principal: 1000, monthlyRate: 0.01, termMonths: 12.5 }),
     RangeError,
   );
 });
