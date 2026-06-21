@@ -1,5 +1,4 @@
 import type { PageProps } from "$fresh/server.ts";
-import { Partial } from "$fresh/runtime.ts";
 import AppChrome from "../components/AppChrome.tsx";
 
 const GLOBAL_STYLES: string = `
@@ -71,27 +70,30 @@ const GLOBAL_STYLES: string = `
 
   .skip-link {
     position: absolute;
-    top: 0;
-    left: 0;
-    transform: translateY(-120%);
+    top: 0.5rem;
+    left: 0.5rem;
+    transform: translateY(-140%);
     padding: 0.75rem 1rem;
     background: var(--color-text);
     color: var(--color-surface);
     text-decoration: none;
-    z-index: 10;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-soft);
+    z-index: 100;
   }
 
-  .skip-link:focus {
+  .skip-link:focus,
+  .skip-link:focus-visible {
     transform: translateY(0);
   }
 
   .container {
-    width: min(100% - 2rem, 72rem);
+    width: min(100% - 1.5rem, 72rem);
     margin: 0 auto;
   }
 
   .site-header {
-    padding: var(--space-5) 0 var(--space-4);
+    padding: var(--space-4) 0 var(--space-3);
   }
 
   .site-header .container,
@@ -132,15 +134,24 @@ const GLOBAL_STYLES: string = `
 
   .site-main {
     flex: 1;
-    padding-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
   }
 
   .site-main .container {
     padding: var(--space-4);
+    overflow-x: auto;
+  }
+
+  .site-main :where(h1, h2, h3) {
+    line-height: 1.2;
+  }
+
+  .site-main :where(p, li, dd, dt) {
+    line-height: 1.6;
   }
 
   .site-footer {
-    padding: 0 0 var(--space-4);
+    padding: 0 0 var(--space-3);
   }
 
   .site-footer .container {
@@ -151,6 +162,7 @@ const GLOBAL_STYLES: string = `
     margin: 0;
     color: var(--color-muted);
     text-align: center;
+    line-height: 1.5;
   }
 
   @media (max-width: 640px) {
@@ -159,20 +171,70 @@ const GLOBAL_STYLES: string = `
     }
 
     .site-header {
-      padding-top: var(--space-4);
+      padding-top: var(--space-3);
+      padding-bottom: var(--space-2);
     }
 
     .site-header .container,
     .site-main .container,
     .site-footer .container {
       border-radius: var(--radius-md);
+      padding-left: var(--space-3);
+      padding-right: var(--space-3);
+    }
+
+    .site-header .container,
+    .site-main .container {
+      padding-top: var(--space-3);
+      padding-bottom: var(--space-3);
+    }
+
+    .site-footer .container {
+      padding-top: var(--space-2);
+      padding-bottom: var(--space-2);
+    }
+
+    .site-description,
+    .site-footer p {
+      font-size: 0.98rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .container {
+      width: min(100% - 0.75rem, 72rem);
+    }
+
+    .skip-link {
+      left: 0.375rem;
+      right: 0.375rem;
+      width: auto;
+      text-align: center;
+    }
+
+    .site-header {
+      padding-top: var(--space-2);
+    }
+
+    .site-eyebrow {
+      font-size: 0.72rem;
+    }
+
+    .site-title {
+      font-size: clamp(1.6rem, 8vw, 2.2rem);
+    }
+
+    .site-description,
+    .site-main,
+    .site-footer p {
+      font-size: 0.95rem;
     }
 
     .site-header .container,
     .site-main .container,
     .site-footer .container {
-      padding-left: var(--space-3);
-      padding-right: var(--space-3);
+      padding-left: var(--space-2);
+      padding-right: var(--space-2);
     }
   }
 `;
@@ -188,9 +250,7 @@ export default function App(props: PageProps): JSX.Element {
       </head>
       <body>
         <AppChrome>
-          <Partial name="body">
-            <props.Component />
-          </Partial>
+          <props.Component />
         </AppChrome>
       </body>
     </html>
