@@ -15,47 +15,45 @@ export interface SacResult {
 export function calculateSac(input: FinancingInput): SacResult {
   assertValidFinancingInput(input);
 
-  const amortization: number = roundToCents(input.principal / input.termMonths);
+  const exactAmortization: number = input.principal / input.termMonths;
+  const displayedAmortization: number = roundToCents(exactAmortization);
 
   if (input.monthlyRate === 0) {
-    const installment: number = amortization;
-    const totalPaid: number = roundToCents(installment * input.termMonths);
-
     return {
-      amortization,
-      firstInstallment: installment,
-      lastInstallment: installment,
-      totalPaid,
-      totalInterest: roundToCents(totalPaid - input.principal),
+      amortization: displayedAmortization,
+      firstInstallment: displayedAmortization,
+      lastInstallment: displayedAmortization,
+      totalPaid: roundToCents(input.principal),
+      totalInterest: 0,
     };
   }
 
-  const firstOutstandingPrincipal: number = input.principal;
-  const lastOutstandingPrincipal: number = input.principal -
-    amortization * (input.termMonths - 1);
-
-  const firstInstallment: number = roundToCents(
-    amortization + firstOutstandingPrincipal * input.monthlyRate,
-  );
-  const lastInstallment: number = roundToCents(
-    amortization + lastOutstandingPrincipal * input.monthlyRate,
-  );
-
+  let remainingPrincipal: number = input.principal;
   let totalPaid: number = 0;
+  let firstInstallment: number | undefined;
+  let lastInstallment: number = 0;
 
-  for (let month: number = 0; month < input.termMonths; month += 1) {
-    const outstandingPrincipal: number = input.principal - amortization * month;
-    const installment: number = roundToCents(
-      amortization + outstandingPrincipal * input.monthlyRate,
+  for (let month: number = 1; month <= input.termMonths; month += 1) {
+    const interest: number = roundToCents(
+      remainingPrincipal * input.monthlyRate,
     );
-    totalPaid += installment;
+    const amortization: number = month === input.termMonths
+      ? roundToCents(remainingPrincipal)
+      : roundToCents(exactAmortization);
+    const installment: number = roundToCents(amortization + interest);
+
+    if (month === 1) {
+      firstInstallment = installment;
+    }
+
+    lastInstallment = installment;
+    totalPaid = roundToCents(totalPaid + installment);
+    remainingPrincipal = roundToCents(remainingPrincipal - amortization);
   }
 
-  totalPaid = roundToCents(totalPaid);
-
   return {
-    amortization,
-    firstInstallment,
+    amortization: displayedAmortization,
+    firstInstallment: firstInstallment ?? 0,
     lastInstallment,
     totalPaid,
     totalInterest: roundToCents(totalPaid - input.principal),
