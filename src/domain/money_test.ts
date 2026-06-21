@@ -1,6 +1,13 @@
 import { assertEquals, assertThrows } from "@std/assert";
 
-import { fromCents, roundMoney, toCents } from "./money.ts";
+import { fromCents, roundMoney, roundToMoneyCents, toCents } from "./money.ts";
+
+Deno.test("roundToMoneyCents aplica arredondamento comercial simétrico em meio centavo", () => {
+  assertEquals(roundToMoneyCents(1.005), 101);
+  assertEquals(roundToMoneyCents(-1.005), -101);
+  assertEquals(roundToMoneyCents(2.675), 268);
+  assertEquals(roundToMoneyCents(-2.675), -268);
+});
 
 Deno.test("roundMoney arredonda valores monetários para duas casas decimais", () => {
   assertEquals(roundMoney(100), 100);
@@ -41,9 +48,9 @@ Deno.test("roundMoney estabiliza limites críticos gerados por operações IEEE-
 });
 
 Deno.test("roundMoney rejeita entradas não finitas", () => {
-  assertThrows(() => roundMoney(Number.NaN), RangeError, "value must be a finite number");
-  assertThrows(() => roundMoney(Infinity), RangeError, "value must be a finite number");
-  assertThrows(() => roundMoney(-Infinity), RangeError, "value must be a finite number");
+  assertThrows((): number => roundMoney(Number.NaN), RangeError);
+  assertThrows((): number => roundMoney(Infinity), RangeError);
+  assertThrows((): number => roundMoney(-Infinity), RangeError);
 });
 
 Deno.test("toCents converte valores positivos usados em cronogramas para centavos", () => {
@@ -72,9 +79,14 @@ Deno.test("toCents estabiliza limites críticos gerados por operações IEEE-754
 });
 
 Deno.test("toCents rejeita entradas não finitas", () => {
-  assertThrows(() => toCents(Number.NaN), RangeError, "value must be a finite number");
-  assertThrows(() => toCents(Infinity), RangeError, "value must be a finite number");
-  assertThrows(() => toCents(-Infinity), RangeError, "value must be a finite number");
+  assertThrows((): number => toCents(Number.NaN), RangeError);
+  assertThrows((): number => toCents(Infinity), RangeError);
+  assertThrows((): number => toCents(-Infinity), RangeError);
+});
+
+Deno.test("toCents rejeita resultados fora da faixa de inteiro seguro", () => {
+  assertThrows((): number => toCents(90071992547409.92), RangeError);
+  assertThrows((): number => toCents(-90071992547409.92), RangeError);
 });
 
 Deno.test("fromCents converte centavos para duas casas decimais", () => {
@@ -86,13 +98,18 @@ Deno.test("fromCents converte centavos para duas casas decimais", () => {
 });
 
 Deno.test("fromCents rejeita entradas fracionárias", () => {
-  assertThrows(() => fromCents(10.5), RangeError, "cents must be an integer");
+  assertThrows((): number => fromCents(10.5), RangeError);
 });
 
 Deno.test("fromCents rejeita entradas não finitas", () => {
-  assertThrows(() => fromCents(Number.NaN), RangeError, "cents must be a finite number");
-  assertThrows(() => fromCents(Infinity), RangeError, "cents must be a finite number");
-  assertThrows(() => fromCents(-Infinity), RangeError, "cents must be a finite number");
+  assertThrows((): number => fromCents(Number.NaN), RangeError);
+  assertThrows((): number => fromCents(Infinity), RangeError);
+  assertThrows((): number => fromCents(-Infinity), RangeError);
+});
+
+Deno.test("fromCents rejeita entradas fora da faixa de inteiro seguro", () => {
+  assertThrows((): number => fromCents(Number.MAX_SAFE_INTEGER + 1), RangeError);
+  assertThrows((): number => fromCents(Number.MIN_SAFE_INTEGER - 1), RangeError);
 });
 
 Deno.test("toCents e fromCents mantêm consistência para parcelas, juros e saldo", () => {

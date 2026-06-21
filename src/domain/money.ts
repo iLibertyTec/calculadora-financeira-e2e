@@ -1,4 +1,4 @@
-const MONEY_EPSILON: number = 1e-10;
+const MAX_SAFE_CENTS: number = Number.MAX_SAFE_INTEGER;
 
 function assertFiniteNumber(value: number, name: string): void {
   if (!Number.isFinite(value)) {
@@ -6,50 +6,65 @@ function assertFiniteNumber(value: number, name: string): void {
   }
 }
 
-function roundToIntegerAwayFromZero(value: number): number {
-  if (value === 0) {
-    return 0;
+function assertSafeInteger(value: number, name: string): void {
+  if (!Number.isSafeInteger(value)) {
+    throw new RangeError(`${name} must be a safe integer`);
   }
-
-  const absolute: number = Math.abs(value);
-  const floorValue: number = Math.floor(absolute);
-  const fraction: number = absolute - floorValue;
-  const roundedAbsolute: number = fraction >= 0.5
-    ? floorValue + 1
-    : floorValue;
-
-  return value < 0 ? -roundedAbsolute : roundedAbsolute;
 }
 
-function normalizeHalfStep(value: number): number {
-  if (value === 0) {
-    return 0;
+function decimalPlaces(value: number): number {
+  const normalized: string = value.toString().toLowerCase();
+
+  if (normalized.includes("e")) {
+    const [coefficient, exponentPart] = normalized.split("e");
+    const exponent: number = Number(exponentPart);
+    const fractionalDigits: number = (coefficient.split(".")[1] ?? "").length;
+    return Math.max(0, fractionalDigits - exponent);
   }
 
-  const sign: number = Math.sign(value);
-  const absolute: number = Math.abs(value);
-  const floorValue: number = Math.floor(absolute);
-  const fraction: number = absolute - floorValue;
-
-  if (Math.abs(fraction - 0.5) <= MONEY_EPSILON) {
-    return sign * (floorValue + 0.5);
-  }
-
-  return value;
+  return (normalized.split(".")[1] ?? "").length;
 }
 
-function toRoundedCents(value: number): number {
+function shiftDecimal(value: number, places: number): number {
   assertFiniteNumber(value, "value");
 
-  return roundToIntegerAwayFromZero(normalizeHalfStep(value * 100));
+  if (!Number.isInteger(places)) {
+    throw new RangeError("places must be an integer");
+  }
+
+  if (value === 0 || places === 0) {
+    return value;
+  }
+
+  const [coefficient, exponentPart = "0"] = value.toString().split("e");
+  const exponent: number = Number(exponentPart);
+  const shiftedExponent: number = exponent + places;
+  return Number(`${coefficient}e${shiftedExponent}`);
+}
+
+export function roundToMoneyCents(value: number): number {
+  assertFiniteNumber(value, "value");
+
+  const centsValue: number = shiftDecimal(value, 2);
+  const roundedCents: number = centsValue < 0
+    ? Math.ceil(centsValue - 0.5)
+    : Math.floor(centsValue + 0.5);
+
+  assertSafeInteger(roundedCents, "cents");
+
+  if (Math.abs(roundedCents) > MAX_SAFE_CENTS) {
+    throw new RangeError("cents must be a safe integer");
+  }
+
+  return roundedCents;
 }
 
 export function roundMoney(value: number): number {
-  return toRoundedCents(value) / 100;
+  return fromCents(roundToMoneyCents(value));
 }
 
 export function toCents(value: number): number {
-  return toRoundedCents(value);
+  return roundToMoneyCents(value);
 }
 
 export function fromCents(cents: number): number {
@@ -59,5 +74,13 @@ export function fromCents(cents: number): number {
     throw new RangeError("cents must be an integer");
   }
 
-  return cents / 100;
+  assertSafeInteger(cents, "cents");
+
+  const money: number = cents / 100;
+
+  if (decimalPlaces(money) > 2) {
+    throw new RangeError("cents could not be represented with two decimal places");
+  }
+
+  return money;
 }
