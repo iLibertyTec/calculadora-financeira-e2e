@@ -1,5 +1,3 @@
-import { roundToCents } from "./money.ts";
-
 export interface SacInstallment {
   readonly number: number;
   readonly amortization: number;
@@ -32,47 +30,49 @@ export function generateSacSchedule(
   validateMonthlyRate(monthlyRate);
   validateTermMonths(termMonths);
 
-  const amortization: number = roundToCents(principal / termMonths);
+  const principalCents: number = toCents(principal);
+  const baseAmortizationCents: number = Math.floor(principalCents / termMonths);
   const installments: SacInstallment[] = [];
-  let balance: number = principal;
-  let totalPaid: number = 0;
-  let totalInterest: number = 0;
+  let remainingBalanceCents: number = principalCents;
+  let totalPaidCents: number = 0;
+  let totalInterestCents: number = 0;
 
   for (let index = 1; index <= termMonths; index += 1) {
-    const interest: number = roundToCents(balance * monthlyRate);
-    const rawAmortization: number = index === termMonths
-      ? balance
-      : amortization;
-    const amortizationValue: number = roundToCents(rawAmortization);
-    const payment: number = roundToCents(amortizationValue + interest);
-    const nextBalance: number = roundToCents(balance - amortizationValue);
+    const interestCents: number = toCents(fromCents(remainingBalanceCents) * monthlyRate);
+    const amortizationCents: number = index === termMonths
+      ? remainingBalanceCents
+      : baseAmortizationCents;
+    const paymentCents: number = amortizationCents + interestCents;
+    const nextBalanceCents: number = index === termMonths
+      ? 0
+      : remainingBalanceCents - amortizationCents;
 
     installments.push(Object.freeze({
       number: index,
-      amortization: amortizationValue,
-      interest,
-      payment,
-      remainingBalance: nextBalance,
+      amortization: fromCents(amortizationCents),
+      interest: fromCents(interestCents),
+      payment: fromCents(paymentCents),
+      remainingBalance: fromCents(nextBalanceCents),
     }));
 
-    totalPaid = roundToCents(totalPaid + payment);
-    totalInterest = roundToCents(totalInterest + interest);
-    balance = nextBalance;
+    totalPaidCents += paymentCents;
+    totalInterestCents += interestCents;
+    remainingBalanceCents = nextBalanceCents;
   }
 
   const firstPayment: number = installments[0]?.payment ?? 0;
   const lastPayment: number = installments[installments.length - 1]?.payment ?? 0;
 
   return Object.freeze({
-    principal,
+    principal: fromCents(principalCents),
     monthlyRate,
     termMonths,
     installments: Object.freeze([...installments]),
     summary: Object.freeze({
       firstPayment,
       lastPayment,
-      totalPaid,
-      totalInterest,
+      totalPaid: fromCents(totalPaidCents),
+      totalInterest: fromCents(totalInterestCents),
     }),
   });
 }
@@ -90,7 +90,15 @@ function validateMonthlyRate(monthlyRate: number): void {
 }
 
 function validateTermMonths(termMonths: number): void {
-  if (!Number.isInteger(termMonths) || termMonths <= 0) {
+  if (!Number.isFinite(termMonths) || !Number.isInteger(termMonths) || termMonths <= 0) {
     throw new Error("termMonths must be a positive integer");
   }
+}
+
+function toCents(value: number): number {
+  return Math.round(value * 100);
+}
+
+function fromCents(value: number): number {
+  return value / 100;
 }

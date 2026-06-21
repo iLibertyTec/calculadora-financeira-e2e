@@ -1,11 +1,12 @@
 import {
+  assert,
   assertEquals,
   assertObjectMatch,
   assertThrows,
 } from "@std/assert";
 import { generateSacSchedule } from "./sac.ts";
 
-deno.test("generateSacSchedule cria cronograma SAC conhecido", () => {
+Deno.test("generateSacSchedule cria cronograma SAC conhecido", () => {
   const schedule = generateSacSchedule(12000, 0.01, 12);
 
   assertEquals(schedule.installments.length, 12);
@@ -32,7 +33,7 @@ deno.test("generateSacSchedule cria cronograma SAC conhecido", () => {
   assertEquals(schedule.installments[11]?.remainingBalance, 0);
 });
 
-deno.test("generateSacSchedule ajusta arredondamento na última parcela", () => {
+Deno.test("generateSacSchedule ajusta saldo residual na última parcela", () => {
   const schedule = generateSacSchedule(1000, 0.01, 3);
 
   assertObjectMatch(schedule.installments[0], {
@@ -55,7 +56,45 @@ deno.test("generateSacSchedule ajusta arredondamento na última parcela", () => 
   });
 });
 
-deno.test("generateSacSchedule rejeita prazo inválido", () => {
+Deno.test("generateSacSchedule fecha soma das amortizações e totais", () => {
+  const schedule = generateSacSchedule(1000, 0.01, 3);
+  const totalAmortization: number = schedule.installments.reduce(
+    (sum: number, installment) => sum + installment.amortization,
+    0,
+  );
+
+  assertEquals(Number(totalAmortization.toFixed(2)), 1000);
+  assertEquals(
+    Number((schedule.principal + schedule.summary.totalInterest).toFixed(2)),
+    schedule.summary.totalPaid,
+  );
+  assertEquals(schedule.installments[schedule.installments.length - 1]?.remainingBalance, 0);
+});
+
+Deno.test("generateSacSchedule suporta taxa zero", () => {
+  const schedule = generateSacSchedule(1000, 0, 3);
+
+  assertObjectMatch(schedule.installments[0], {
+    amortization: 333.33,
+    interest: 0,
+    payment: 333.33,
+    remainingBalance: 666.67,
+  });
+  assertObjectMatch(schedule.installments[2], {
+    amortization: 333.34,
+    interest: 0,
+    payment: 333.34,
+    remainingBalance: 0,
+  });
+  assertObjectMatch(schedule.summary, {
+    firstPayment: 333.33,
+    lastPayment: 333.34,
+    totalPaid: 1000,
+    totalInterest: 0,
+  });
+});
+
+Deno.test("generateSacSchedule rejeita prazo inválido", () => {
   assertThrows(
     () => generateSacSchedule(12000, 0.01, 0),
     Error,
@@ -63,7 +102,7 @@ deno.test("generateSacSchedule rejeita prazo inválido", () => {
   );
 });
 
-deno.test("generateSacSchedule rejeita valor financiado inválido", () => {
+Deno.test("generateSacSchedule rejeita valor financiado inválido", () => {
   assertThrows(
     () => generateSacSchedule(0, 0.01, 12),
     Error,
@@ -71,10 +110,37 @@ deno.test("generateSacSchedule rejeita valor financiado inválido", () => {
   );
 });
 
-deno.test("generateSacSchedule rejeita taxa inválida", () => {
+Deno.test("generateSacSchedule rejeita taxa inválida", () => {
   assertThrows(
     () => generateSacSchedule(12000, -0.01, 12),
     Error,
     "monthlyRate must be zero or greater",
   );
+});
+
+Deno.test("generateSacSchedule rejeita entradas não finitas", () => {
+  assertThrows(
+    () => generateSacSchedule(Number.NaN, 0.01, 12),
+    Error,
+    "principal must be greater than zero",
+  );
+  assertThrows(
+    () => generateSacSchedule(12000, Number.POSITIVE_INFINITY, 12),
+    Error,
+    "monthlyRate must be zero or greater",
+  );
+  assertThrows(
+    () => generateSacSchedule(12000, 0.01, Number.NaN),
+    Error,
+    "termMonths must be a positive integer",
+  );
+});
+
+Deno.test("generateSacSchedule retorna estruturas imutáveis", () => {
+  const schedule = generateSacSchedule(12000, 0.01, 12);
+
+  assert(Object.isFrozen(schedule));
+  assert(Object.isFrozen(schedule.installments));
+  assert(Object.isFrozen(schedule.summary));
+  assert(Object.isFrozen(schedule.installments[0]));
 });
