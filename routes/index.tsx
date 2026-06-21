@@ -1,3 +1,4 @@
+import AppChrome from "../components/AppChrome.tsx";
 import CalculatorNav, {
   type PlannedCalculatorNavItem,
 } from "../islands/CalculatorNav.tsx";
@@ -32,7 +33,7 @@ const plannedCalculators: PlannedCalculator[] = [
 
 export default function HomePage() {
   return (
-    <>
+    <AppChrome>
       <style>{`
         .home {
           display: grid;
@@ -175,24 +176,10 @@ export default function HomePage() {
           list-style: none;
         }
 
-        .calculator-nav__search {
-          display: grid;
-          gap: 0.5rem;
-          max-width: 24rem;
-        }
-
-        .calculator-nav__search-label {
-          font-weight: 700;
-          color: var(--ink);
-        }
-
-        .calculator-nav__search-input {
-          min-height: 2.75rem;
-          padding: 0.75rem 1rem;
-          border: 1px solid var(--border);
-          border-radius: 0.85rem;
-          background: rgba(255, 255, 255, 0.03);
-          color: var(--ink);
+        .calculator-nav__intro {
+          margin: 0;
+          color: var(--muted);
+          line-height: 1.6;
         }
 
         .calculator-nav__item {
@@ -228,11 +215,6 @@ export default function HomePage() {
           font-size: 0.85rem;
         }
 
-        .calculator-nav__empty {
-          margin: 0;
-          color: var(--muted);
-        }
-
         @media (min-width: 768px) {
           .home-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -240,59 +222,45 @@ export default function HomePage() {
         }
       `}</style>
 
-      <main class="home" id="conteudo-principal">
+      <div class="home">
         <section class="home-hero" aria-labelledby="apresentacao-title">
           <p class="home-kicker">Versão inicial do produto</p>
-          <h1 class="home-heading home-heading--primary" id="apresentacao-title">
-            Calculadora Financeira para simular decisões com mais clareza
-          </h1>
+          <h2 class="home-heading home-heading--primary" id="apresentacao-title">
+            Simulações financeiras com base sólida para as próximas etapas.
+          </h2>
           <p class="home-text">
-            Esta é a página inicial da Calculadora Financeira, uma base para
-            reunir ferramentas de simulação e análise em português do Brasil.
-          </p>
-          <p class="home-text">
-            Nesta primeira versão, você pode conhecer a proposta do produto e
-            visualizar quais calculadoras estão planejadas para as próximas
-            entregas.
+            Esta home apresenta a direção do produto e já deixa pronta a
+            estrutura de navegação para futuras calculadoras interativas.
           </p>
           <div class="home-actions">
             <a class="home-link" href="#calculadoras-planejadas">
               Ver calculadoras planejadas
             </a>
             <a class="home-button" href="#proximos-passos">
-              Entender próximos passos
+              Entender roadmap inicial
             </a>
           </div>
         </section>
 
-        <section class="home-section" aria-labelledby="visao-title">
-          <h2 class="home-heading" id="visao-title">Visão desta base inicial</h2>
-          <p class="home-text">
-            O produto está sendo preparado para receber calculadoras financeiras
-            específicas de forma incremental, com foco em experiência simples,
-            acessível e evolutiva.
-          </p>
-          <ul class="home-list">
-            <li>Navegação clara entre ferramentas planejadas.</li>
-            <li>Estrutura pronta para interatividade futura com islands.</li>
-            <li>Base adequada para expandir simulações sem refazer a home.</li>
-          </ul>
-        </section>
-
         <section
           class="home-section"
-          id="calculadoras-planejadas"
           aria-labelledby="calculadoras-planejadas-title"
+          id="calculadoras-planejadas"
         >
           <h2 class="home-heading" id="calculadoras-planejadas-title">
-            Calculadoras planejadas
+            Navegação planejada
           </h2>
           <p class="home-text">
-            Use a navegação abaixo para destacar rapidamente as ferramentas já
-            mapeadas no roadmap. Sem JavaScript, os links continuam funcionando
-            normalmente.
+            A lista abaixo organiza os acessos previstos para o produto e serve
+            como base segura para evoluções client-side futuras.
           </p>
           <CalculatorNav items={plannedCalculators} />
+        </section>
+
+        <section class="home-section" aria-labelledby="recursos-title">
+          <h2 class="home-heading" id="recursos-title">
+            Calculadoras priorizadas
+          </h2>
           <ul class="home-grid">
             {plannedCalculators.map((calculator: PlannedCalculator) => (
               <li key={calculator.href} class="home-card">
@@ -309,19 +277,24 @@ export default function HomePage() {
 
         <section
           class="home-section"
-          id="proximos-passos"
           aria-labelledby="proximos-passos-title"
+          id="proximos-passos"
         >
           <h2 class="home-heading" id="proximos-passos-title">
-            Próximos passos do roadmap
+            Próximos passos
           </h2>
           <p class="home-note">
-            As próximas entregas devem transformar estas entradas planejadas em
-            calculadoras funcionais, mantendo a navegação consistente e
-            progressive enhancement como padrão.
+            Entregas iniciais previstas: simulador de financiamento, projeção de
+            juros compostos e comparação de cenários com foco em clareza,
+            acessibilidade e evolução incremental.
           </p>
+          <ul class="home-list">
+            <li>Publicar a primeira calculadora com validações simples.</li>
+            <li>Adicionar resultados interpretáveis e compartilháveis.</li>
+            <li>Expandir a navegação planejada conforme novas rotas surgirem.</li>
+          </ul>
         </section>
-      </main>
-    </>
+      </div>
+    </AppChrome>
   );
 }
