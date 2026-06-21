@@ -1,7 +1,7 @@
 {
   "nodeModulesDir": "manual",
   "tasks": {
-    "check": "deno fmt --check && deno lint && deno check main.ts routes/health.ts routes/health_test.ts routes/index.tsx components/AppChrome.tsx islands/CalculatorNav.tsx src/app_info.ts src/app_info_test.ts vite.config.ts",
+    "check": "deno fmt --check && deno lint && deno check main.ts routes/**/*.ts routes/**/*.tsx components/**/*.tsx islands/**/*.tsx src/**/*.ts vite.config.ts",
     "dev": "deno run -A --watch main.ts",
     "test": "deno test -A",
     "start": "deno run -A main.ts"
