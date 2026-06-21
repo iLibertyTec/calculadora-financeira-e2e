@@ -55,7 +55,6 @@ const ALLOWED_FIELDS: ReadonlySet<string> = new Set([
 ]);
 
 const MIN_ANNUAL_RATE: number = -1;
-const MAX_YEARS: number = 100;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -141,10 +140,10 @@ export function validateCompoundInterestPayload(
       field: "principal",
       message: TYPE_FIELD_MESSAGES.principal,
     });
-  } else if (principalValue <= 0) {
+  } else if (principalValue < 0) {
     errors.push({
       field: "principal",
-      message: "principal must be greater than 0",
+      message: "principal must be greater than or equal to 0",
     });
   }
 
@@ -156,7 +155,7 @@ export function validateCompoundInterestPayload(
   } else if (annualRateValue <= MIN_ANNUAL_RATE) {
     errors.push({
       field: "annualRate",
-      message: "annualRate must be a decimal rate greater than -1",
+      message: "annualRate must be a decimal rate greater than -1 (for example, 0.12 for 12%)",
     });
   }
 
@@ -169,11 +168,6 @@ export function validateCompoundInterestPayload(
     errors.push({
       field: "years",
       message: "years must be greater than 0",
-    });
-  } else if (yearsValue > MAX_YEARS) {
-    errors.push({
-      field: "years",
-      message: `years must be less than or equal to ${MAX_YEARS}`,
     });
   }
 

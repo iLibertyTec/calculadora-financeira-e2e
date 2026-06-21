@@ -26,6 +26,25 @@ Deno.test("validateCompoundInterestPayload returns normalized data for valid pay
   });
 });
 
+Deno.test("validateCompoundInterestPayload accepts zero principal for compatibility", () => {
+  const result = validateCompoundInterestPayload({
+    principal: 0,
+    annualRate: 0.125,
+    years: 5,
+    compoundsPerYear: 12,
+  });
+
+  assertEquals(result, {
+    ok: true,
+    data: {
+      principal: 0,
+      annualRate: 0.125,
+      years: 5,
+      compoundsPerYear: 12,
+    },
+  });
+});
+
 Deno.test("validateCompoundInterestPayload returns field errors for missing fields", () => {
   const result = validateCompoundInterestPayload({});
 
@@ -84,11 +103,12 @@ Deno.test("validateCompoundInterestPayload rejects negative and invalid constrai
     errors: [
       {
         field: "principal",
-        message: "principal must be greater than 0",
+        message: "principal must be greater than or equal to 0",
       },
       {
         field: "annualRate",
-        message: "annualRate must be a decimal rate greater than -1",
+        message:
+          "annualRate must be a decimal rate greater than -1 (for example, 0.12 for 12%)",
       },
       {
         field: "years",
@@ -192,25 +212,6 @@ Deno.test("validateCompoundInterestPayload rejects unknown fields", () => {
       {
         field: "payload",
         message: "unknown field: extra",
-      },
-    ],
-  });
-});
-
-Deno.test("validateCompoundInterestPayload rejects years above maximum", () => {
-  const result = validateCompoundInterestPayload({
-    principal: 1000,
-    annualRate: 0.1,
-    years: 101,
-    compoundsPerYear: 12,
-  });
-
-  assertEquals(result, {
-    ok: false,
-    errors: [
-      {
-        field: "years",
-        message: "years must be less than or equal to 100",
       },
     ],
   });
