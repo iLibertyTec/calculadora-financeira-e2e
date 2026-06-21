@@ -1,4 +1,4 @@
-export interface PriceCalculationInput {
+export interface ValidatedPricePayload {
   amount: number;
   monthlyRatePercent: number;
   monthlyRate: number;
@@ -8,7 +8,7 @@ export interface PriceCalculationInput {
 export type PricePayloadValidationResult =
   | {
     ok: true;
-    data: PriceCalculationInput;
+    data: ValidatedPricePayload;
     errors: [];
   }
   | {
@@ -29,16 +29,25 @@ const MAX_TERM_MONTHS: number = 1_200;
 export function validatePricePayload(
   payload: unknown,
 ): PricePayloadValidationResult {
-  if (!isPlainRecord(payload)) {
+  if (!isJsonObjectRecord(payload)) {
     return {
       ok: false,
       errors: [
-        "Payload inválido: envie um objeto JSON simples com amount, monthlyRatePercent e termMonths.",
+        `Payload inválido: esperado objeto JSON com ${EXPECTED_KEYS.join(", ")}. Tipo recebido: ${describePayloadType(payload)}.`,
       ],
     };
   }
 
   const errors: string[] = [];
+  const extraKeys: string[] = Object.keys(payload).filter((key: string) => {
+    return !EXPECTED_KEYS.includes(key);
+  });
+
+  if (extraKeys.length > 0) {
+    errors.push(
+      `Campos desconhecidos no payload: ${extraKeys.join(", ")}. Apenas ${EXPECTED_KEYS.join(", ")} são aceitos.`,
+    );
+  }
 
   const amount: unknown = readOwnProperty(payload, "amount");
   const monthlyRatePercent: unknown = readOwnProperty(
@@ -158,13 +167,8 @@ function validateTermMonths(value: unknown, errors: string[]): void {
   }
 }
 
-function isPlainRecord(value: unknown): value is Record<string, unknown> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
-  }
-
-  const prototype: object | null = Object.getPrototypeOf(value);
-  return prototype === Object.prototype;
+function isJsonObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function isFiniteNumber(value: unknown): value is number {
@@ -189,4 +193,16 @@ function readOwnProperty(
   }
 
   return descriptor?.value;
+}
+
+function describePayloadType(value: unknown): string {
+  if (value === null) {
+    return "null";
+  }
+
+  if (Array.isArray(value)) {
+    return "array";
+  }
+
+  return typeof value;
 }

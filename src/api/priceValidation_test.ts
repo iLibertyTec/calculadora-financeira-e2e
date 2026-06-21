@@ -28,7 +28,7 @@ Deno.test("validatePricePayload retorna erro para payload ausente ou inválido",
   assertEquals(result, {
     ok: false,
     errors: [
-      "Payload inválido: envie um objeto JSON simples com amount, monthlyRatePercent e termMonths.",
+      "Payload inválido: esperado objeto JSON com amount, monthlyRatePercent, termMonths. Tipo recebido: null.",
     ],
   });
 });
@@ -93,13 +93,40 @@ Deno.test("validatePricePayload retorna erro para prazo fracionário", () => {
   });
 });
 
-Deno.test("validatePricePayload ignora campos extras desconhecidos", () => {
+Deno.test("validatePricePayload retorna erro para campos extras desconhecidos", () => {
   const result = validatePricePayload({
     amount: 1000,
     monthlyRatePercent: 2,
     termMonths: 12,
     extra: true,
   });
+
+  assertEquals(result, {
+    ok: false,
+    errors: [
+      "Campos desconhecidos no payload: extra. Apenas amount, monthlyRatePercent, termMonths são aceitos.",
+    ],
+  });
+});
+
+Deno.test("validatePricePayload retorna erro para payload array", () => {
+  const result = validatePricePayload([]);
+
+  assertEquals(result, {
+    ok: false,
+    errors: [
+      "Payload inválido: esperado objeto JSON com amount, monthlyRatePercent, termMonths. Tipo recebido: array.",
+    ],
+  });
+});
+
+Deno.test("validatePricePayload aceita payload com prototype nulo", () => {
+  const payload = Object.create(null) as Record<string, unknown>;
+  payload.amount = 1000;
+  payload.monthlyRatePercent = 2;
+  payload.termMonths = 12;
+
+  const result = validatePricePayload(payload);
 
   assertEquals(result.ok, true);
   if (result.ok) {
@@ -112,33 +139,6 @@ Deno.test("validatePricePayload ignora campos extras desconhecidos", () => {
       },
     });
   }
-});
-
-Deno.test("validatePricePayload retorna erro para payload array", () => {
-  const result = validatePricePayload([]);
-
-  assertEquals(result, {
-    ok: false,
-    errors: [
-      "Payload inválido: envie um objeto JSON simples com amount, monthlyRatePercent e termMonths.",
-    ],
-  });
-});
-
-Deno.test("validatePricePayload retorna erro para payload com prototype nulo", () => {
-  const payload = Object.create(null) as Record<string, unknown>;
-  payload.amount = 1000;
-  payload.monthlyRatePercent = 2;
-  payload.termMonths = 12;
-
-  const result = validatePricePayload(payload);
-
-  assertEquals(result, {
-    ok: false,
-    errors: [
-      "Payload inválido: envie um objeto JSON simples com amount, monthlyRatePercent e termMonths.",
-    ],
-  });
 });
 
 Deno.test("validatePricePayload retorna erro para limites máximos excedidos", () => {
@@ -154,6 +154,23 @@ Deno.test("validatePricePayload retorna erro para limites máximos excedidos", (
       "amount deve ser menor ou igual a 1000000000000.",
       "monthlyRatePercent deve ser menor ou igual a 10000.",
       "termMonths deve ser menor ou igual a 1200.",
+    ],
+  });
+});
+
+Deno.test("validatePricePayload retorna erro para valores não finitos", () => {
+  const result = validatePricePayload({
+    amount: Number.POSITIVE_INFINITY,
+    monthlyRatePercent: Number.NaN,
+    termMonths: Number.NEGATIVE_INFINITY,
+  });
+
+  assertEquals(result, {
+    ok: false,
+    errors: [
+      "amount deve ser um número finito maior que zero.",
+      "monthlyRatePercent deve ser um número finito em percentual maior ou igual a zero. A conversão para taxa decimal acontece internamente.",
+      "termMonths deve ser um número inteiro positivo.",
     ],
   });
 });
