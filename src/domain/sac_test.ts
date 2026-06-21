@@ -68,7 +68,10 @@ Deno.test("generateSacSchedule fecha soma das amortizações e totais", () => {
     Number((schedule.principal + schedule.summary.totalInterest).toFixed(2)),
     schedule.summary.totalPaid,
   );
-  assertEquals(schedule.installments[schedule.installments.length - 1]?.remainingBalance, 0);
+  assertEquals(
+    schedule.installments[schedule.installments.length - 1]?.remainingBalance,
+    0,
+  );
 });
 
 Deno.test("generateSacSchedule suporta taxa zero", () => {
@@ -92,6 +95,36 @@ Deno.test("generateSacSchedule suporta taxa zero", () => {
     totalPaid: 1000,
     totalInterest: 0,
   });
+});
+
+Deno.test("generateSacSchedule mantém soma das amortizações em múltiplos prazos", () => {
+  const terms: number[] = [2, 6, 24];
+
+  for (const term of terms) {
+    const schedule = generateSacSchedule(12345.67, 0.015, term);
+    const totalAmortization: number = Number(
+      schedule.installments.reduce(
+        (sum: number, installment) => sum + installment.amortization,
+        0,
+      ).toFixed(2),
+    );
+
+    assertEquals(totalAmortization, 12345.67);
+    assertEquals(schedule.installments[schedule.installments.length - 1]?.remainingBalance, 0);
+  }
+});
+
+Deno.test("generateSacSchedule mantém saldo devedor decrescente até zero", () => {
+  const schedule = generateSacSchedule(5000, 0.02, 6);
+
+  let previousBalance: number = schedule.principal;
+
+  for (const installment of schedule.installments) {
+    assert(installment.remainingBalance <= previousBalance);
+    previousBalance = installment.remainingBalance;
+  }
+
+  assertEquals(schedule.installments[schedule.installments.length - 1]?.remainingBalance, 0);
 });
 
 Deno.test("generateSacSchedule rejeita prazo inválido", () => {
@@ -133,6 +166,14 @@ Deno.test("generateSacSchedule rejeita entradas não finitas", () => {
     () => generateSacSchedule(12000, 0.01, Number.NaN),
     Error,
     "termMonths must be a positive integer",
+  );
+});
+
+Deno.test("generateSacSchedule rejeita valores monetários fora da faixa segura", () => {
+  assertThrows(
+    () => generateSacSchedule(Number.MAX_SAFE_INTEGER / 100, 0.01, 12),
+    Error,
+    "money value is outside supported range",
   );
 });
 
