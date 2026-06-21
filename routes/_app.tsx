@@ -1,4 +1,5 @@
 import type { PageProps } from "$fresh/server.ts";
+import { Partial } from "$fresh/runtime.ts";
 import AppChrome from "../components/AppChrome.tsx";
 
 const GLOBAL_STYLES: string = `
@@ -9,7 +10,9 @@ const GLOBAL_STYLES: string = `
     --color-text: #102033;
     --color-muted: #526277;
     --color-primary: #0f62fe;
+    --color-primary-strong: #0b4ecc;
     --color-border: #d9e2ec;
+    --color-focus: #ffbf47;
     --shadow-soft: 0 12px 32px rgba(16, 32, 51, 0.08);
     --radius-lg: 24px;
     --radius-md: 16px;
@@ -41,6 +44,20 @@ const GLOBAL_STYLES: string = `
     color: var(--color-primary);
   }
 
+  a:hover {
+    color: var(--color-primary-strong);
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 3px;
+    border-radius: 0.375rem;
+  }
+
   img {
     max-width: 100%;
     display: block;
@@ -50,6 +67,22 @@ const GLOBAL_STYLES: string = `
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+  }
+
+  .skip-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translateY(-120%);
+    padding: 0.75rem 1rem;
+    background: var(--color-text);
+    color: var(--color-surface);
+    text-decoration: none;
+    z-index: 10;
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
   }
 
   .container {
@@ -144,7 +177,7 @@ const GLOBAL_STYLES: string = `
   }
 `;
 
-export default function App(props: PageProps) {
+export default function App(props: PageProps): JSX.Element {
   return (
     <html lang="pt-BR">
       <head>
@@ -155,7 +188,9 @@ export default function App(props: PageProps) {
       </head>
       <body>
         <AppChrome>
-          <props.Component />
+          <Partial name="body">
+            <props.Component />
+          </Partial>
         </AppChrome>
       </body>
     </html>
