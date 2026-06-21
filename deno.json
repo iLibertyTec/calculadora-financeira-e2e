@@ -1,7 +1,7 @@
 {
   "nodeModulesDir": "manual",
   "tasks": {
-    "check": "deno fmt --check && deno lint && deno check main.ts fresh.config.ts vite.config.ts routes/_app.tsx routes/**/*.tsx src/**/*.ts",
+    "check": "deno fmt --check && deno lint && deno check main.ts fresh.config.ts vite.config.ts routes/**/*.ts routes/**/*.tsx src/**/*.ts",
     "dev": "deno run -A --watch main.ts",
     "test": "deno test -A",
     "start": "deno run -A main.ts"
