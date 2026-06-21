@@ -7,7 +7,10 @@ Deno.test("GET /health retorna contrato de saúde", async () => {
   const response = await handler.GET!(request, {} as never);
 
   assertEquals(response.status, 200);
-  assertEquals(response.headers.get("content-type"), "application/json; charset=utf-8");
+  assertEquals(
+    response.headers.get("content-type"),
+    "application/json; charset=utf-8",
+  );
   assertEquals(response.headers.get("cache-control"), "no-store");
   assertEquals(await response.json(), {
     ok: true,
