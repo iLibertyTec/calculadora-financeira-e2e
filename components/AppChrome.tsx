@@ -6,13 +6,15 @@ type AppChromeProps = {
 };
 
 export default function AppChrome(props: AppChromeProps) {
+  const currentYear: number = new Date().getFullYear();
+
   return (
     <div class="app-shell">
       <a class="skip-link" href="#conteudo-principal">Pular para o conteúdo</a>
       <header class="app-header">
         <div class="app-header__inner">
           <p class="app-eyebrow">Calculadora financeira</p>
-          <p class="app-title">{PRODUCT_NAME}</p>
+          <h1 class="app-title">{PRODUCT_NAME}</h1>
           <p class="app-subtitle">
             Simulações e análises com uma experiência simples, responsiva e
             acessível.
@@ -24,7 +26,7 @@ export default function AppChrome(props: AppChromeProps) {
       </main>
       <footer class="app-footer">
         <div class="app-footer__inner">
-          <small>© 2025 {PRODUCT_NAME}</small>
+          <small>© {currentYear} {PRODUCT_NAME}</small>
         </div>
       </footer>
     </div>
