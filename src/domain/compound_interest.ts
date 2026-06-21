@@ -24,29 +24,20 @@ export interface CompoundInterestResult {
   series: CompoundInterestPoint[];
 }
 
-const PERIOD_EPSILON: number = 1e-10;
-
 export function calculateCompoundInterest(
   input: CompoundInterestInput,
 ): CompoundInterestResult {
   validateInput(input);
 
   const { principal, annualRate, years, compoundsPerYear } = input;
-  const totalPeriodsExact: number = years * compoundsPerYear;
-  const totalPeriodsRounded: number = Math.round(totalPeriodsExact);
-
-  if (Math.abs(totalPeriodsExact - totalPeriodsRounded) > PERIOD_EPSILON) {
-    throw new RangeError(
-      "years must align with whole compounding periods for discrete compounding",
-    );
-  }
-
-  const totalPeriods: number = totalPeriodsRounded;
   const ratePerPeriod: number = annualRate / compoundsPerYear;
+  const totalPeriods: number = years * compoundsPerYear;
   const growthFactor: number = 1 + ratePerPeriod;
   const series: CompoundInterestPoint[] = [];
+  const wholePeriods: number = Math.floor(totalPeriods);
+  const fractionalPeriod: number = totalPeriods - wholePeriods;
 
-  for (let period = 0; period <= totalPeriods; period += 1) {
+  for (let period = 0; period <= wholePeriods; period += 1) {
     const amount: number = principal * Math.pow(growthFactor, period);
     series.push({
       period,
@@ -57,6 +48,24 @@ export function calculateCompoundInterest(
   }
 
   const finalAmount: number = principal * Math.pow(growthFactor, totalPeriods);
+  const finalPointYear: number = years;
+
+  if (fractionalPeriod > 0) {
+    series.push({
+      period: wholePeriods + 1,
+      year: finalPointYear,
+      amount: finalAmount,
+      accruedInterest: finalAmount - principal,
+    });
+  } else if (series.length > 0) {
+    const lastIndex: number = series.length - 1;
+    series[lastIndex] = {
+      ...series[lastIndex],
+      year: finalPointYear,
+      amount: finalAmount,
+      accruedInterest: finalAmount - principal,
+    };
+  }
 
   return {
     principal,
@@ -93,5 +102,10 @@ function validateInput(input: CompoundInterestInput): void {
     input.compoundsPerYear <= 0
   ) {
     throw new RangeError("compoundsPerYear must be a positive integer");
+  }
+
+  const totalPeriods: number = input.years * input.compoundsPerYear;
+  if (!Number.isFinite(totalPeriods)) {
+    throw new RangeError("years * compoundsPerYear must be a finite number");
   }
 }
