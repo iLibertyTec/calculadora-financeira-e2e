@@ -1,5 +1,6 @@
 export interface PriceCalculationInput {
   amount: number;
+  monthlyRatePercent: number;
   monthlyRate: number;
   termMonths: number;
 }
@@ -21,6 +22,10 @@ const EXPECTED_KEYS: readonly string[] = [
   "termMonths",
 ];
 
+const MAX_AMOUNT: number = 1_000_000_000_000;
+const MAX_MONTHLY_RATE_PERCENT: number = 10_000;
+const MAX_TERM_MONTHS: number = 1_200;
+
 export function validatePricePayload(
   payload: unknown,
 ): PricePayloadValidationResult {
@@ -28,26 +33,19 @@ export function validatePricePayload(
     return {
       ok: false,
       errors: [
-        "Payload inválido: envie um objeto JSON com amount, monthlyRatePercent e termMonths.",
+        "Payload inválido: envie um objeto JSON simples com amount, monthlyRatePercent e termMonths.",
       ],
     };
   }
 
   const errors: string[] = [];
 
-  const extraKeys: string[] = Object.keys(payload).filter((key: string) => {
-    return !EXPECTED_KEYS.includes(key);
-  });
-
-  if (extraKeys.length > 0) {
-    errors.push(
-      `Payload contém campos não permitidos: ${extraKeys.join(", ")}. Use apenas amount, monthlyRatePercent e termMonths.`,
-    );
-  }
-
-  const amount: unknown = payload.amount;
-  const monthlyRatePercent: unknown = payload.monthlyRatePercent;
-  const termMonths: unknown = payload.termMonths;
+  const amount: unknown = readOwnProperty(payload, "amount");
+  const monthlyRatePercent: unknown = readOwnProperty(
+    payload,
+    "monthlyRatePercent",
+  );
+  const termMonths: unknown = readOwnProperty(payload, "termMonths");
 
   validateAmount(amount, errors);
   validateMonthlyRatePercent(monthlyRatePercent, errors);
@@ -61,6 +59,7 @@ export function validatePricePayload(
     ok: true,
     data: {
       amount: amount as number,
+      monthlyRatePercent: monthlyRatePercent as number,
       monthlyRate: (monthlyRatePercent as number) / 100,
       termMonths: termMonths as number,
     },
@@ -86,6 +85,11 @@ function validateAmount(value: unknown, errors: string[]): void {
 
   if (value <= 0) {
     errors.push("amount deve ser maior que zero.");
+    return;
+  }
+
+  if (value > MAX_AMOUNT) {
+    errors.push(`amount deve ser menor ou igual a ${MAX_AMOUNT}.`);
   }
 }
 
@@ -97,20 +101,27 @@ function validateMonthlyRatePercent(value: unknown, errors: string[]): void {
 
   if (typeof value === "string") {
     errors.push(
-      "monthlyRatePercent deve ser um número JSON, não uma string.",
+      "monthlyRatePercent deve ser um número JSON em percentual, não uma string. A conversão para taxa decimal acontece internamente.",
     );
     return;
   }
 
   if (!isFiniteNumber(value)) {
     errors.push(
-      "monthlyRatePercent deve ser um número finito maior ou igual a zero.",
+      "monthlyRatePercent deve ser um número finito em percentual maior ou igual a zero. A conversão para taxa decimal acontece internamente.",
     );
     return;
   }
 
   if (value < 0) {
     errors.push("monthlyRatePercent deve ser maior ou igual a zero.");
+    return;
+  }
+
+  if (value > MAX_MONTHLY_RATE_PERCENT) {
+    errors.push(
+      `monthlyRatePercent deve ser menor ou igual a ${MAX_MONTHLY_RATE_PERCENT}.`,
+    );
   }
 }
 
@@ -131,12 +142,19 @@ function validateTermMonths(value: unknown, errors: string[]): void {
   }
 
   if (!Number.isInteger(value)) {
-    errors.push("termMonths deve ser um inteiro positivo.");
+    errors.push(
+      `termMonths deve ser um inteiro positivo. Valor recebido: ${String(value)}.`,
+    );
     return;
   }
 
   if (value <= 0) {
     errors.push("termMonths deve ser maior que zero.");
+    return;
+  }
+
+  if (value > MAX_TERM_MONTHS) {
+    errors.push(`termMonths deve ser menor ou igual a ${MAX_TERM_MONTHS}.`);
   }
 }
 
@@ -146,9 +164,29 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
   }
 
   const prototype: object | null = Object.getPrototypeOf(value);
-  return prototype === Object.prototype || prototype === null;
+  return prototype === Object.prototype;
 }
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function readOwnProperty(
+  record: Record<string, unknown>,
+  key: string,
+): unknown {
+  if (!Object.hasOwn(record, key)) {
+    return undefined;
+  }
+
+  const descriptor: PropertyDescriptor | undefined = Object.getOwnPropertyDescriptor(
+    record,
+    key,
+  );
+
+  if (descriptor?.get !== undefined || descriptor?.set !== undefined) {
+    return undefined;
+  }
+
+  return descriptor?.value;
 }
