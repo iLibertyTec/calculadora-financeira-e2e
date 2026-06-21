@@ -5,8 +5,12 @@ export interface CompoundInterestPayload {
   compoundsPerYear: number;
 }
 
+export type CompoundInterestValidationField =
+  | keyof CompoundInterestPayload
+  | "payload";
+
 export interface CompoundInterestValidationError {
-  field: keyof CompoundInterestPayload;
+  field: CompoundInterestValidationField;
   message: string;
 }
 
@@ -38,7 +42,7 @@ const TYPE_FIELD_MESSAGES: Record<keyof CompoundInterestPayload, string> = {
   compoundsPerYear: "compoundsPerYear must be a finite number",
 };
 
-const MIN_ANNUAL_RATE: number = -100;
+const MIN_ANNUAL_RATE: number = -1;
 const MAX_ANNUAL_RATE: number = 1000;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -53,7 +57,7 @@ export function validateCompoundInterestPayload(
       ok: false,
       errors: [
         {
-          field: "principal",
+          field: "payload",
           message: "payload must be a JSON object",
         },
       ],
@@ -104,10 +108,10 @@ export function validateCompoundInterestPayload(
       field: "principal",
       message: TYPE_FIELD_MESSAGES.principal,
     });
-  } else if (principalValue <= 0) {
+  } else if (principalValue < 0) {
     errors.push({
       field: "principal",
-      message: "principal must be greater than 0",
+      message: "principal must be greater than or equal to 0",
     });
   }
 
@@ -117,12 +121,12 @@ export function validateCompoundInterestPayload(
       message: TYPE_FIELD_MESSAGES.annualRate,
     });
   } else if (
-    annualRateValue < MIN_ANNUAL_RATE || annualRateValue > MAX_ANNUAL_RATE
+    annualRateValue <= MIN_ANNUAL_RATE || annualRateValue > MAX_ANNUAL_RATE
   ) {
     errors.push({
       field: "annualRate",
       message:
-        `annualRate must be between ${MIN_ANNUAL_RATE} and ${MAX_ANNUAL_RATE}`,
+        `annualRate must be greater than ${MIN_ANNUAL_RATE} and less than or equal to ${MAX_ANNUAL_RATE}`,
     });
   }
 
@@ -131,10 +135,10 @@ export function validateCompoundInterestPayload(
       field: "years",
       message: TYPE_FIELD_MESSAGES.years,
     });
-  } else if (yearsValue <= 0) {
+  } else if (yearsValue < 0) {
     errors.push({
       field: "years",
-      message: "years must be greater than 0",
+      message: "years must be greater than or equal to 0",
     });
   }
 

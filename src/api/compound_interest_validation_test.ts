@@ -7,7 +7,7 @@ import { validateCompoundInterestPayload } from "./compound_interest_validation.
 Deno.test("validateCompoundInterestPayload returns normalized data for valid payload", () => {
   const result = validateCompoundInterestPayload({
     principal: 1000,
-    annualRate: 12.5,
+    annualRate: 0.125,
     years: 5,
     compoundsPerYear: 12,
   });
@@ -16,8 +16,27 @@ Deno.test("validateCompoundInterestPayload returns normalized data for valid pay
     ok: true,
     data: {
       principal: 1000,
-      annualRate: 12.5,
+      annualRate: 0.125,
       years: 5,
+      compoundsPerYear: 12,
+    },
+  });
+});
+
+Deno.test("validateCompoundInterestPayload accepts zero principal and zero years", () => {
+  const result = validateCompoundInterestPayload({
+    principal: 0,
+    annualRate: 0.12,
+    years: 0,
+    compoundsPerYear: 12,
+  });
+
+  assertEquals(result, {
+    ok: true,
+    data: {
+      principal: 0,
+      annualRate: 0.12,
+      years: 0,
       compoundsPerYear: 12,
     },
   });
@@ -43,7 +62,7 @@ Deno.test("validateCompoundInterestPayload returns field errors for missing fiel
 Deno.test("validateCompoundInterestPayload rejects invalid types", () => {
   const result = validateCompoundInterestPayload({
     principal: "1000",
-    annualRate: "10",
+    annualRate: "0.1",
     years: true,
     compoundsPerYear: null,
   });
@@ -68,10 +87,10 @@ Deno.test("validateCompoundInterestPayload rejects invalid types", () => {
   });
 });
 
-Deno.test("validateCompoundInterestPayload rejects negative and zero constraints", () => {
+Deno.test("validateCompoundInterestPayload rejects negative and invalid constraints", () => {
   const result = validateCompoundInterestPayload({
-    principal: 0,
-    annualRate: -101,
+    principal: -1,
+    annualRate: -1,
     years: -2,
     compoundsPerYear: 0,
   });
@@ -81,13 +100,17 @@ Deno.test("validateCompoundInterestPayload rejects negative and zero constraints
     errors: [
       {
         field: "principal",
-        message: "principal must be greater than 0",
+        message: "principal must be greater than or equal to 0",
       },
       {
         field: "annualRate",
-        message: "annualRate must be between -100 and 1000",
+        message:
+          "annualRate must be greater than -1 and less than or equal to 1000",
       },
-      { field: "years", message: "years must be greater than 0" },
+      {
+        field: "years",
+        message: "years must be greater than or equal to 0",
+      },
       {
         field: "compoundsPerYear",
         message: "compoundsPerYear must be greater than 0",
@@ -127,7 +150,7 @@ Deno.test("validateCompoundInterestPayload rejects NaN and infinity", () => {
 Deno.test("validateCompoundInterestPayload rejects non-integer compounding frequency", () => {
   const result = validateCompoundInterestPayload({
     principal: 1000,
-    annualRate: 10,
+    annualRate: 0.1,
     years: 3,
     compoundsPerYear: 12.5,
   });
@@ -150,7 +173,7 @@ Deno.test("validateCompoundInterestPayload rejects non-object payloads without t
     ok: false,
     errors: [
       {
-        field: "principal",
+        field: "payload",
         message: "payload must be a JSON object",
       },
     ],
