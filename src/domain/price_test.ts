@@ -10,9 +10,10 @@ Deno.test("calculatePriceAmortization returns constant payment totals for positi
 
   assertEquals(result, {
     monthlyPayment: 945.6,
-    totalPaid: 11347.18,
-    totalInterest: 1347.18,
+    totalPaid: 11347.2,
+    totalInterest: 1347.2,
   });
+  assertEquals(result.totalPaid, result.monthlyPayment * 12);
 });
 
 Deno.test("calculatePriceAmortization divides principal equally when rate is zero", () => {
@@ -27,6 +28,22 @@ Deno.test("calculatePriceAmortization divides principal equally when rate is zer
     totalPaid: 1200,
     totalInterest: 0,
   });
+  assertEquals(result.totalPaid, result.monthlyPayment * 12);
+});
+
+Deno.test("calculatePriceAmortization keeps total consistent with rounded installments", () => {
+  const result = calculatePriceAmortization({
+    principal: 1000,
+    monthlyRate: 0.01,
+    months: 3,
+  });
+
+  assertEquals(result, {
+    monthlyPayment: 340.02,
+    totalPaid: 1020.06,
+    totalInterest: 20.06,
+  });
+  assertEquals(result.totalPaid, result.monthlyPayment * 3);
 });
 
 Deno.test("calculatePriceAmortization rejects invalid parameters", () => {
@@ -36,7 +53,7 @@ Deno.test("calculatePriceAmortization rejects invalid parameters", () => {
       monthlyRate: 0.02,
       months: 12,
     });
-  }, Error, "Principal must be greater than zero");
+  }, RangeError, "Principal must be greater than zero");
 
   assertThrows(() => {
     calculatePriceAmortization({
@@ -44,7 +61,7 @@ Deno.test("calculatePriceAmortization rejects invalid parameters", () => {
       monthlyRate: -0.01,
       months: 12,
     });
-  }, Error, "Monthly rate cannot be negative");
+  }, RangeError, "Monthly rate cannot be negative");
 
   assertThrows(() => {
     calculatePriceAmortization({
@@ -52,7 +69,7 @@ Deno.test("calculatePriceAmortization rejects invalid parameters", () => {
       monthlyRate: 0.02,
       months: 0,
     });
-  }, Error, "Months must be a positive integer");
+  }, RangeError, "Months must be a positive integer");
 
   assertThrows(() => {
     calculatePriceAmortization({
@@ -60,7 +77,7 @@ Deno.test("calculatePriceAmortization rejects invalid parameters", () => {
       monthlyRate: 0.02,
       months: 12,
     });
-  }, Error, "Principal must be greater than zero");
+  }, RangeError, "Principal must be greater than zero");
 
   assertThrows(() => {
     calculatePriceAmortization({
@@ -68,7 +85,7 @@ Deno.test("calculatePriceAmortization rejects invalid parameters", () => {
       monthlyRate: Number.POSITIVE_INFINITY,
       months: 12,
     });
-  }, Error, "Monthly rate cannot be negative");
+  }, RangeError, "Monthly rate cannot be negative");
 
   assertThrows(() => {
     calculatePriceAmortization({
@@ -76,5 +93,5 @@ Deno.test("calculatePriceAmortization rejects invalid parameters", () => {
       monthlyRate: 0.02,
       months: 12.5,
     });
-  }, Error, "Months must be a positive integer");
+  }, RangeError, "Months must be a positive integer");
 });
