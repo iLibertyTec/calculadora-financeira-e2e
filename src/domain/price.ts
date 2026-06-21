@@ -53,18 +53,21 @@ export function calculatePriceSchedule(
   const monthlyPayment = roundCurrency(rawPayment);
 
   const installments: PriceInstallment[] = [];
-  let remainingBalance: number = roundCurrency(principal);
-  let totalPaid: number = 0;
-  let totalInterest: number = 0;
+  let remainingBalance: number = principal;
 
   for (let period = 1; period <= termMonths; period += 1) {
+    const roundedBalance: number = roundCurrency(remainingBalance);
     const interest: number = roundCurrency(remainingBalance * monthlyRate);
     let payment: number = monthlyPayment;
     let amortization: number = roundCurrency(payment - interest);
-    let balance: number = roundCurrency(remainingBalance - amortization);
+    let balance: number = roundCurrency(roundedBalance - amortization);
 
     if (period === termMonths) {
-      amortization = remainingBalance;
+      amortization = roundedBalance;
+      payment = roundCurrency(amortization + interest);
+      balance = 0;
+    } else if (amortization > roundedBalance) {
+      amortization = roundedBalance;
       payment = roundCurrency(amortization + interest);
       balance = 0;
     }
@@ -77,10 +80,19 @@ export function calculatePriceSchedule(
       balance,
     });
 
-    remainingBalance = balance;
-    totalPaid = roundCurrency(totalPaid + payment);
-    totalInterest = roundCurrency(totalInterest + interest);
+    remainingBalance = remainingBalance - amortization;
   }
+
+  const totalPaid: number = roundCurrency(
+    installments.reduce((sum: number, installment: PriceInstallment) => {
+      return sum + installment.payment;
+    }, 0),
+  );
+  const totalInterest: number = roundCurrency(
+    installments.reduce((sum: number, installment: PriceInstallment) => {
+      return sum + installment.interest;
+    }, 0),
+  );
 
   return {
     summary: {
