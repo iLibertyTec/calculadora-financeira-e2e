@@ -5,6 +5,11 @@ export interface CompoundInterestPayload {
   compoundsPerYear: number;
 }
 
+export interface CompoundInterestResult {
+  amount: number;
+  interestEarned: number;
+}
+
 export type CompoundInterestValidationField =
   | keyof CompoundInterestPayload
   | "payload";
@@ -42,8 +47,15 @@ const TYPE_FIELD_MESSAGES: Record<keyof CompoundInterestPayload, string> = {
   compoundsPerYear: "compoundsPerYear must be a finite number",
 };
 
+const ALLOWED_FIELDS: ReadonlySet<string> = new Set([
+  "principal",
+  "annualRate",
+  "years",
+  "compoundsPerYear",
+]);
+
 const MIN_ANNUAL_RATE: number = -1;
-const MAX_ANNUAL_RATE: number = 1000;
+const MAX_YEARS: number = 100;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -52,19 +64,40 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 export function validateCompoundInterestPayload(
   payload: unknown,
 ): CompoundInterestValidationResult {
+  if (payload === undefined) {
+    return {
+      ok: false,
+      errors: [
+        {
+          field: "payload",
+          message: "body is required",
+        },
+      ],
+    };
+  }
+
   if (!isPlainObject(payload)) {
     return {
       ok: false,
       errors: [
         {
           field: "payload",
-          message: "payload must be a JSON object",
+          message: "body must be a JSON object",
         },
       ],
     };
   }
 
   const errors: CompoundInterestValidationError[] = [];
+
+  for (const key of Object.keys(payload)) {
+    if (!ALLOWED_FIELDS.has(key)) {
+      errors.push({
+        field: "payload",
+        message: `unknown field: ${key}`,
+      });
+    }
+  }
 
   const principalValue: unknown = payload.principal;
   const annualRateValue: unknown = payload.annualRate;
@@ -108,10 +141,10 @@ export function validateCompoundInterestPayload(
       field: "principal",
       message: TYPE_FIELD_MESSAGES.principal,
     });
-  } else if (principalValue < 0) {
+  } else if (principalValue <= 0) {
     errors.push({
       field: "principal",
-      message: "principal must be greater than or equal to 0",
+      message: "principal must be greater than 0",
     });
   }
 
@@ -120,13 +153,10 @@ export function validateCompoundInterestPayload(
       field: "annualRate",
       message: TYPE_FIELD_MESSAGES.annualRate,
     });
-  } else if (
-    annualRateValue <= MIN_ANNUAL_RATE || annualRateValue > MAX_ANNUAL_RATE
-  ) {
+  } else if (annualRateValue <= MIN_ANNUAL_RATE) {
     errors.push({
       field: "annualRate",
-      message:
-        `annualRate must be greater than ${MIN_ANNUAL_RATE} and less than or equal to ${MAX_ANNUAL_RATE}`,
+      message: "annualRate must be a decimal rate greater than -1",
     });
   }
 
@@ -135,10 +165,15 @@ export function validateCompoundInterestPayload(
       field: "years",
       message: TYPE_FIELD_MESSAGES.years,
     });
-  } else if (yearsValue < 0) {
+  } else if (yearsValue <= 0) {
     errors.push({
       field: "years",
-      message: "years must be greater than or equal to 0",
+      message: "years must be greater than 0",
+    });
+  } else if (yearsValue > MAX_YEARS) {
+    errors.push({
+      field: "years",
+      message: `years must be less than or equal to ${MAX_YEARS}`,
     });
   }
 
@@ -174,5 +209,18 @@ export function validateCompoundInterestPayload(
       years: yearsValue,
       compoundsPerYear: compoundsPerYearValue,
     },
+  };
+}
+
+export function calculateCompoundInterest(
+  payload: CompoundInterestPayload,
+): CompoundInterestResult {
+  const amount: number = payload.principal *
+    (1 + payload.annualRate / payload.compoundsPerYear) **
+      (payload.compoundsPerYear * payload.years);
+
+  return {
+    amount,
+    interestEarned: amount - payload.principal,
   };
 }

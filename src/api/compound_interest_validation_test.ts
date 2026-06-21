@@ -2,7 +2,10 @@ import {
   assertEquals,
   assertObjectMatch,
 } from "@std/assert";
-import { validateCompoundInterestPayload } from "./compound_interest_validation.ts";
+import {
+  calculateCompoundInterest,
+  validateCompoundInterestPayload,
+} from "./compound_interest_validation.ts";
 
 Deno.test("validateCompoundInterestPayload returns normalized data for valid payload", () => {
   const result = validateCompoundInterestPayload({
@@ -18,25 +21,6 @@ Deno.test("validateCompoundInterestPayload returns normalized data for valid pay
       principal: 1000,
       annualRate: 0.125,
       years: 5,
-      compoundsPerYear: 12,
-    },
-  });
-});
-
-Deno.test("validateCompoundInterestPayload accepts zero principal and zero years", () => {
-  const result = validateCompoundInterestPayload({
-    principal: 0,
-    annualRate: 0.12,
-    years: 0,
-    compoundsPerYear: 12,
-  });
-
-  assertEquals(result, {
-    ok: true,
-    data: {
-      principal: 0,
-      annualRate: 0.12,
-      years: 0,
       compoundsPerYear: 12,
     },
   });
@@ -100,16 +84,15 @@ Deno.test("validateCompoundInterestPayload rejects negative and invalid constrai
     errors: [
       {
         field: "principal",
-        message: "principal must be greater than or equal to 0",
+        message: "principal must be greater than 0",
       },
       {
         field: "annualRate",
-        message:
-          "annualRate must be greater than -1 and less than or equal to 1000",
+        message: "annualRate must be a decimal rate greater than -1",
       },
       {
         field: "years",
-        message: "years must be greater than or equal to 0",
+        message: "years must be greater than 0",
       },
       {
         field: "compoundsPerYear",
@@ -174,8 +157,73 @@ Deno.test("validateCompoundInterestPayload rejects non-object payloads without t
     errors: [
       {
         field: "payload",
-        message: "payload must be a JSON object",
+        message: "body must be a JSON object",
       },
     ],
   });
+});
+
+Deno.test("validateCompoundInterestPayload rejects undefined body with specific message", () => {
+  const result = validateCompoundInterestPayload(undefined);
+
+  assertEquals(result, {
+    ok: false,
+    errors: [
+      {
+        field: "payload",
+        message: "body is required",
+      },
+    ],
+  });
+});
+
+Deno.test("validateCompoundInterestPayload rejects unknown fields", () => {
+  const result = validateCompoundInterestPayload({
+    principal: 1000,
+    annualRate: 0.1,
+    years: 5,
+    compoundsPerYear: 12,
+    extra: true,
+  });
+
+  assertEquals(result, {
+    ok: false,
+    errors: [
+      {
+        field: "payload",
+        message: "unknown field: extra",
+      },
+    ],
+  });
+});
+
+Deno.test("validateCompoundInterestPayload rejects years above maximum", () => {
+  const result = validateCompoundInterestPayload({
+    principal: 1000,
+    annualRate: 0.1,
+    years: 101,
+    compoundsPerYear: 12,
+  });
+
+  assertEquals(result, {
+    ok: false,
+    errors: [
+      {
+        field: "years",
+        message: "years must be less than or equal to 100",
+      },
+    ],
+  });
+});
+
+Deno.test("calculateCompoundInterest keeps domain contract available", () => {
+  const result = calculateCompoundInterest({
+    principal: 1000,
+    annualRate: 0.12,
+    years: 1,
+    compoundsPerYear: 12,
+  });
+
+  assertEquals(result.amount.toFixed(2), "1126.83");
+  assertEquals(result.interestEarned.toFixed(2), "126.83");
 });
