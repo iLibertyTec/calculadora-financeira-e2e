@@ -3,11 +3,7 @@ import config from "./fresh.config.ts";
 
 export const define = createDefine(config);
 export const app = define.app();
-const freshHandler: (request: Request) => Promise<Response> = app.handler();
-
-export const handler = (request: Request): Promise<Response> => {
-  return freshHandler(request);
-};
+export const handler = app.handler();
 
 if (import.meta.main) {
   const port = Number(Deno.env.get("PORT") ?? 8000);
