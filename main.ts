@@ -1,4 +1,5 @@
 import { formatCounterMessage, VisitCounter } from "./counter.ts";
+import { SERVICE_INFO } from "./src/service_info.ts";
 
 const counter = new VisitCounter();
 
@@ -8,8 +9,8 @@ export async function handler(req: Request): Promise<Response> {
   if (url.pathname === "/health") {
     return Response.json({
       ok: true,
-      service: "ifactory-product",
-      version: "0.1.0",
+      service: SERVICE_INFO.name,
+      version: SERVICE_INFO.version,
     });
   }
 
