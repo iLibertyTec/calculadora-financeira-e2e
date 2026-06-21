@@ -1,7 +1,7 @@
 {
   "nodeModulesDir": "manual",
   "tasks": {
-    "check": "deno fmt --check && deno lint && deno check main.ts fresh.config.ts vite.config.ts routes/**/*.ts routes/**/*.tsx src/**/*.ts",
+    "check": "deno fmt --check && deno lint && deno check main.ts fresh.config.ts vite.config.ts routes/**/*.ts routes/**/*.tsx src/**/*.ts components/**/*.ts components/**/*.tsx",
     "dev": "deno run -A --watch main.ts",
     "test": "deno test -A",
     "start": "deno run -A main.ts"
@@ -13,6 +13,7 @@
     "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@^0.0.1-alpha.31",
     "preact": "npm:preact@^10.26.4",
     "preact/": "npm:preact@^10.26.4/",
+    "preact-render-to-string": "npm:preact-render-to-string@^6.5.13",
     "@preact/signals": "npm:@preact/signals@^2.0.1",
     "@preact/signals-core": "npm:@preact/signals-core@^1.8.0",
     "vite": "npm:vite@^6.3.5"
