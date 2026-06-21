@@ -1,4 +1,5 @@
 import { formatCounterMessage, VisitCounter } from "./counter.ts";
+import { APP_VERSION, PRODUCT_NAME, SERVICE_NAME } from "./src/app_info.ts";
 
 const counter = new VisitCounter();
 
@@ -8,8 +9,8 @@ export async function handler(req: Request): Promise<Response> {
   if (url.pathname === "/health") {
     return Response.json({
       ok: true,
-      service: "ifactory-product",
-      version: "0.1.0",
+      service: SERVICE_NAME,
+      version: APP_VERSION,
     });
   }
 
@@ -34,7 +35,7 @@ export async function handler(req: Request): Promise<Response> {
   if (url.pathname === "/") {
     const html = `<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>iFactory Product — Visit Analytics</title>
+<title>${PRODUCT_NAME} — Visit Analytics</title>
 <style>
 :root{--bg:#080b17;--panel:#141b34;--ink:#eaeefa;--mut:#8b95b8;--accent:#4c8dff}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -52,7 +53,7 @@ button{background:var(--accent);color:#fff;border:none;padding:12px 24px;border-
 <div id="count">0</div>
 <p id="msg"></p>
 <button id="btn">Registrar visita</button>
-<div class="badge">iFactory Product · Deno Deploy</div>
+<div class="badge">${PRODUCT_NAME} · Deno Deploy</div>
 </div>
 <script>
 const countEl=document.getElementById('count'),msgEl=document.getElementById('msg');
@@ -70,6 +71,6 @@ refresh();
 
 if (import.meta.main) {
   const port = Number(Deno.env.get("PORT") ?? 8000);
-  console.log(`iFactory Product on http://localhost:${port}`);
+  console.log(`${PRODUCT_NAME} on http://localhost:${port}`);
   Deno.serve({ port }, handler);
 }
