@@ -1,7 +1,7 @@
-import type { ComponentChildren } from "preact";
+import type { ComponentChildren, FunctionComponent } from "preact";
 
 interface AppProps {
-  Component: () => ComponentChildren;
+  Component: FunctionComponent;
 }
 
 export default function App({ Component }: AppProps): ComponentChildren {
