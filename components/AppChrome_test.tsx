@@ -6,7 +6,7 @@ Deno.test("AppChrome renderiza estrutura básica do layout", () => {
   const html: string = renderToString(
     <AppChrome>
       <section>
-        <h2>Conteúdo</h2>
+        <h1>Conteúdo</h1>
         <p>Área principal.</p>
       </section>
     </AppChrome>,

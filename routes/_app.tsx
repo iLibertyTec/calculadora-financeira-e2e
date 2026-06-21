@@ -30,11 +30,13 @@ const GLOBAL_STYLES: string = `
 
   html {
     font-size: 16px;
+    overflow-x: hidden;
   }
 
   body {
     margin: 0;
     min-height: 100vh;
+    overflow-x: hidden;
     background: linear-gradient(180deg, #eef4ff 0%, var(--color-background) 100%);
     color: var(--color-text);
   }
@@ -69,7 +71,7 @@ const GLOBAL_STYLES: string = `
   }
 
   .skip-link {
-    position: absolute;
+    position: fixed;
     top: 0.5rem;
     left: 0.5rem;
     transform: translateY(-140%);
@@ -122,6 +124,7 @@ const GLOBAL_STYLES: string = `
     margin: 0;
     font-size: clamp(2rem, 4vw, 3.5rem);
     line-height: 1.1;
+    font-weight: 700;
   }
 
   .site-description {
@@ -139,15 +142,21 @@ const GLOBAL_STYLES: string = `
 
   .site-main .container {
     padding: var(--space-4);
-    overflow-x: auto;
+    min-width: 0;
+  }
+
+  .site-main > .container > * {
+    max-width: 100%;
   }
 
   .site-main :where(h1, h2, h3) {
     line-height: 1.2;
+    overflow-wrap: anywhere;
   }
 
   .site-main :where(p, li, dd, dt) {
     line-height: 1.6;
+    overflow-wrap: anywhere;
   }
 
   .site-footer {
@@ -156,13 +165,17 @@ const GLOBAL_STYLES: string = `
 
   .site-footer .container {
     padding: var(--space-3) var(--space-4);
+    text-align: center;
+    color: var(--color-muted);
+    line-height: 1.5;
   }
 
-  .site-footer p {
-    margin: 0;
-    color: var(--color-muted);
-    text-align: center;
-    line-height: 1.5;
+  .site-footer .container > *:first-child {
+    margin-top: 0;
+  }
+
+  .site-footer .container > *:last-child {
+    margin-bottom: 0;
   }
 
   @media (max-width: 640px) {
@@ -195,7 +208,7 @@ const GLOBAL_STYLES: string = `
     }
 
     .site-description,
-    .site-footer p {
+    .site-footer .container {
       font-size: 0.98rem;
     }
   }
@@ -226,7 +239,7 @@ const GLOBAL_STYLES: string = `
 
     .site-description,
     .site-main,
-    .site-footer p {
+    .site-footer .container {
       font-size: 0.95rem;
     }
 
@@ -250,7 +263,7 @@ export default function App(props: PageProps): JSX.Element {
       </head>
       <body>
         <AppChrome>
-          <props.Component />
+          <props.Component {...props} />
         </AppChrome>
       </body>
     </html>

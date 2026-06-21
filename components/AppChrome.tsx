@@ -26,7 +26,9 @@ export default function AppChrome(props: AppChromeProps): JSX.Element {
       <header class="site-header">
         <div class="container">
           <p class="site-eyebrow">Calculadora Financeira</p>
-          <h1 class="site-title">{props.title ?? DEFAULT_TITLE}</h1>
+          <p class="site-title" role="heading" aria-level={1}>
+            {props.title ?? DEFAULT_TITLE}
+          </p>
           <p class="site-description">
             {props.description ?? DEFAULT_DESCRIPTION}
           </p>
@@ -36,9 +38,7 @@ export default function AppChrome(props: AppChromeProps): JSX.Element {
         <div class="container">{props.children}</div>
       </main>
       <footer class="site-footer">
-        <div class="container">
-          <p>{props.footer ?? DEFAULT_FOOTER}</p>
-        </div>
+        <div class="container">{props.footer ?? DEFAULT_FOOTER}</div>
       </footer>
     </div>
   );
