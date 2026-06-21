@@ -11,21 +11,21 @@ const featureCards: FeatureCard[] = [
     description:
       "Planeje parcelas, entrada, prazo e custo total para avaliar diferentes opções de crédito.",
     href: "/calculadoras/financiamento",
-    status: "Planejada",
+    status: "Em construção",
   },
   {
     title: "Juros compostos",
     description:
       "Projete crescimento de patrimônio com aportes recorrentes, taxa mensal e horizonte de investimento.",
     href: "/calculadoras/juros-compostos",
-    status: "Planejada",
+    status: "Em construção",
   },
   {
     title: "Comparação de cenários",
     description:
       "Compare alternativas lado a lado para entender impacto de taxas, prazos e estratégias financeiras.",
     href: "/calculadoras/comparacao-de-cenarios",
-    status: "Planejada",
+    status: "Em construção",
   },
 ];
 
@@ -101,12 +101,14 @@ export default function HomePage() {
           border: 1px solid var(--border);
           background: rgba(255, 255, 255, 0.03);
           color: var(--muted);
-          cursor: not-allowed;
         }
 
         .home-grid {
           display: grid;
           gap: 1rem;
+          padding: 0;
+          margin: 0;
+          list-style: none;
         }
 
         .home-card {
@@ -170,26 +172,31 @@ export default function HomePage() {
         }
       `}</style>
 
-      <div class="home">
+      <main class="home" id="conteudo-principal">
         <section class="home-hero" aria-labelledby="apresentacao-title">
           <p class="home-kicker">Versão inicial do produto</p>
-          <h2 class="home-heading home-heading--primary" id="apresentacao-title">
-            Simule decisões financeiras com mais clareza
-          </h2>
+          <h1 class="home-heading home-heading--primary" id="apresentacao-title">
+            Calculadora Financeira para simular decisões com mais clareza
+          </h1>
           <p class="home-text">
             Esta é a página inicial da Calculadora Financeira, uma base para
             reunir ferramentas de simulação e análise em português do Brasil.
           </p>
           <p class="home-text">
             Nesta primeira versão, você pode conhecer a proposta do produto e
-            navegar pela estrutura das calculadoras que serão disponibilizadas
-            nas próximas etapas.
+            visualizar quais calculadoras estão planejadas para as próximas
+            entregas.
           </p>
           <div class="home-actions">
             <a class="home-link" href="#calculadoras-title">
-              Ver calculadoras planejadas
+              Conhecer calculadoras planejadas
             </a>
           </div>
+          <p class="home-note">
+            As rotas das calculadoras ainda não estão disponíveis nesta etapa.
+            Esta home apresenta a visão inicial do produto e indica o que está
+            em construção para evitar navegação para páginas inexistentes.
+          </p>
         </section>
 
         <section class="home-section" aria-labelledby="calculadoras-title">
@@ -200,33 +207,44 @@ export default function HomePage() {
             O produto foi pensado para apoiar análises práticas e comparações
             rápidas antes de financiar, investir ou revisar alternativas.
           </p>
-          <div class="home-grid">
+          <ul class="home-grid">
             {featureCards.map((feature: FeatureCard) => (
-              <article class="home-card" key={feature.href}>
-                <div class="home-card__header">
-                  <h3 class="home-card__title">{feature.title}</h3>
-                  <span class="home-card__badge">{feature.status}</span>
-                </div>
-                <p class="home-card__description">{feature.description}</p>
-                <p class="home-card__hint">
-                  Rota planejada: <code>{feature.href}</code>
-                </p>
-              </article>
+              <li key={feature.href}>
+                <article class="home-card">
+                  <div class="home-card__header">
+                    <h3 class="home-card__title">{feature.title}</h3>
+                    <span class="home-card__badge">{feature.status}</span>
+                  </div>
+                  <p class="home-card__description">{feature.description}</p>
+                  <p class="home-card__hint">
+                    Rota planejada: <code>{feature.href}</code>
+                  </p>
+                  <p class="home-card__hint">
+                    Disponibilidade atual: funcionalidade ainda indisponível.
+                  </p>
+                </article>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
 
-        <section class="home-section" aria-labelledby="proximo-passo-title">
-          <h2 class="home-heading" id="proximo-passo-title">
-            Próximo passo
+        <section class="home-section" aria-labelledby="proximos-passos-title">
+          <h2 class="home-heading" id="proximos-passos-title">
+            Próximos passos do produto
           </h2>
-          <p class="home-note">
-            Esta versão inicial apresenta a visão do produto e a navegação das
-            funcionalidades futuras sem depender de JavaScript no cliente para a
-            renderização da página.
+          <p class="home-text">
+            As próximas entregas devem transformar essas áreas em calculadoras
+            utilizáveis, com formulários, resultados detalhados e comparação de
+            cenários sem exigir JavaScript obrigatório para acessar o conteúdo
+            principal.
           </p>
+          <ul class="home-list">
+            <li>Simulação de financiamento com parcelas e custo total.</li>
+            <li>Projeção de juros compostos com aportes recorrentes.</li>
+            <li>Comparação entre cenários financeiros lado a lado.</li>
+          </ul>
         </section>
-      </div>
+      </main>
     </>
   );
 }
