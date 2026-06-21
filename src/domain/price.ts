@@ -1,4 +1,8 @@
-import { ensureValidFinancingInput, roundCurrency } from "./financing.ts";
+import {
+  ensureValidFinancingInput,
+  isEffectivelyZeroRate,
+  roundCurrency,
+} from "./financing.ts";
 
 export interface PriceCalculationInput {
   principal: number;
@@ -18,12 +22,13 @@ export function calculatePriceAmortization(
   ensureValidFinancingInput(input);
 
   const { principal, monthlyRate, months } = input;
-  const isZeroRate: boolean = monthlyRate === 0;
+  const isZeroRate: boolean = isEffectivelyZeroRate(monthlyRate);
 
-  const growthFactor: number = isZeroRate ? 1 : (1 + monthlyRate) ** months;
   const rawMonthlyPayment: number = isZeroRate
     ? principal / months
-    : principal * ((monthlyRate * growthFactor) / (growthFactor - 1));
+    : principal *
+      (monthlyRate /
+        (1 - Math.pow(1 + monthlyRate, -months)));
 
   const monthlyPayment: number = roundCurrency(rawMonthlyPayment);
   const totalPaid: number = roundCurrency(monthlyPayment * months);

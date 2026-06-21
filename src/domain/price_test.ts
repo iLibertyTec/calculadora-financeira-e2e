@@ -31,6 +31,20 @@ Deno.test("calculatePriceAmortization divides principal equally when rate is zer
   assertEquals(result.totalPaid, result.monthlyPayment * 12);
 });
 
+Deno.test("calculatePriceAmortization treats near-zero rates as zero for stability", () => {
+  const result = calculatePriceAmortization({
+    principal: 1200,
+    monthlyRate: 1e-12,
+    months: 12,
+  });
+
+  assertEquals(result, {
+    monthlyPayment: 100,
+    totalPaid: 1200,
+    totalInterest: 0,
+  });
+});
+
 Deno.test("calculatePriceAmortization keeps total consistent with rounded installments", () => {
   const result = calculatePriceAmortization({
     principal: 1000,
@@ -85,7 +99,7 @@ Deno.test("calculatePriceAmortization rejects invalid parameters", () => {
       monthlyRate: Number.POSITIVE_INFINITY,
       months: 12,
     });
-  }, RangeError, "Monthly rate cannot be negative");
+  }, RangeError, "Monthly rate must be a finite number");
 
   assertThrows(() => {
     calculatePriceAmortization({
