@@ -78,9 +78,25 @@ Deno.test("calculateCompoundInterest supports fractional periods outside the fre
 
   assertEquals(result.series.length, 15);
   assertAlmostEquals(result.series[13].year, 13 / 12, 1e-12);
+  assertAlmostEquals(result.series[14].period, 13.200000000000001, 1e-12);
   assertAlmostEquals(result.series[14].year, 1.1, 1e-12);
   assertAlmostEquals(result.finalAmount, 1115.8462987816868, 1e-12);
   assertAlmostEquals(result.accruedInterest, 115.84629878168683, 1e-12);
+});
+
+Deno.test("calculateCompoundInterest handles periods smaller than one full compounding interval", () => {
+  const result = calculateCompoundInterest({
+    principal: 1000,
+    annualRate: 0.12,
+    years: 0.05,
+    compoundsPerYear: 12,
+  });
+
+  assertEquals(result.series.length, 2);
+  assertEquals(result.series[0].period, 0);
+  assertAlmostEquals(result.series[1].period, 0.6000000000000001, 1e-12);
+  assertAlmostEquals(result.series[1].year, 0.05, 1e-12);
+  assertAlmostEquals(result.finalAmount, 1005.9880556662681, 1e-12);
 });
 
 Deno.test("calculateCompoundInterest tolerates floating-point imprecision in periods", () => {
@@ -117,7 +133,7 @@ Deno.test("calculateCompoundInterest handles zero principal and zero years", () 
   assertEquals(zeroYears.accruedInterest, 0);
 });
 
-Deno.test("calculateCompoundInterest allows negative rates", () => {
+Deno.test("calculateCompoundInterest allows negative rates above -100%", () => {
   const result = calculateCompoundInterest({
     principal: 1000,
     annualRate: -0.12,
@@ -163,5 +179,42 @@ Deno.test("calculateCompoundInterest validates numeric boundaries", () => {
       }),
     RangeError,
     "annualRate must be a finite number",
+  );
+  assertThrows(
+    () =>
+      calculateCompoundInterest({
+        principal: 100,
+        annualRate: -1,
+        years: 1,
+        compoundsPerYear: 1,
+      }),
+    RangeError,
+    "annualRate must be greater than -1",
+  );
+});
+
+Deno.test("calculateCompoundInterest validates infinities", () => {
+  assertThrows(
+    () =>
+      calculateCompoundInterest({
+        principal: Number.POSITIVE_INFINITY,
+        annualRate: 0.1,
+        years: 1,
+        compoundsPerYear: 1,
+      }),
+    RangeError,
+    "principal must be a finite number",
+  );
+
+  assertThrows(
+    () =>
+      calculateCompoundInterest({
+        principal: 100,
+        annualRate: 0.1,
+        years: Number.NEGATIVE_INFINITY,
+        compoundsPerYear: 1,
+      }),
+    RangeError,
+    "years must be a finite number",
   );
 });

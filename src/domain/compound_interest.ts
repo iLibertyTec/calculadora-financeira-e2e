@@ -32,13 +32,21 @@ export function calculateCompoundInterest(
 
   const { principal, annualRate, years, compoundsPerYear } = input;
   const totalPeriodsExact: number = years * compoundsPerYear;
-  const wholePeriods: number = Math.floor(totalPeriodsExact + PERIOD_EPSILON);
-  const fractionalPeriod: number = Math.max(0, totalPeriodsExact - wholePeriods);
+  const roundedPeriods: number = Math.round(totalPeriodsExact);
+  const hasWholePeriodsOnly: boolean =
+    Math.abs(totalPeriodsExact - roundedPeriods) <= PERIOD_EPSILON;
+  const wholePeriods: number = hasWholePeriodsOnly
+    ? roundedPeriods
+    : Math.floor(totalPeriodsExact);
+  const finalPeriod: number = hasWholePeriodsOnly
+    ? wholePeriods
+    : totalPeriodsExact;
   const ratePerPeriod: number = annualRate / compoundsPerYear;
+  const growthFactor: number = 1 + ratePerPeriod;
   const series: CompoundInterestPoint[] = [];
 
   for (let period = 0; period <= wholePeriods; period += 1) {
-    const amount: number = principal * Math.pow(1 + ratePerPeriod, period);
+    const amount: number = principal * Math.pow(growthFactor, period);
     series.push({
       period,
       year: period / compoundsPerYear,
@@ -47,21 +55,17 @@ export function calculateCompoundInterest(
     });
   }
 
-  if (fractionalPeriod > PERIOD_EPSILON) {
-    const finalExponent: number = wholePeriods + fractionalPeriod;
-    const finalAmount: number = principal * Math.pow(
-      1 + ratePerPeriod,
-      finalExponent,
-    );
+  if (!hasWholePeriodsOnly) {
+    const finalAmount: number = principal * Math.pow(growthFactor, finalPeriod);
     series.push({
-      period: wholePeriods + 1,
+      period: finalPeriod,
       year: years,
       amount: finalAmount,
       accruedInterest: finalAmount - principal,
     });
   }
 
-  const finalAmount: number = series[series.length - 1]?.amount ?? principal;
+  const finalAmount: number = principal * Math.pow(growthFactor, finalPeriod);
 
   return {
     principal,
@@ -80,6 +84,10 @@ function validateInput(input: CompoundInterestInput): void {
 
   if (!Number.isFinite(input.annualRate)) {
     throw new RangeError("annualRate must be a finite number");
+  }
+
+  if (input.annualRate <= -1) {
+    throw new RangeError("annualRate must be greater than -1");
   }
 
   if (!Number.isFinite(input.years) || input.years < 0) {
