@@ -1,13 +1,13 @@
 import CalculatorNav from "../islands/CalculatorNav.tsx";
 
-type FeatureCard = {
+type PlannedCalculator = {
   title: string;
   description: string;
   href: string;
   status: string;
 };
 
-const featureCards: FeatureCard[] = [
+const plannedCalculators: PlannedCalculator[] = [
   {
     title: "Financiamento",
     description:
@@ -229,37 +229,58 @@ export default function HomePage() {
               Conhecer calculadoras planejadas
             </a>
           </div>
-          <CalculatorNav items={featureCards} />
+          <CalculatorNav items={plannedCalculators} />
           <p class="home-note">
-            As rotas das calculadoras ainda não estão disponíveis nesta etapa.
-            Esta home apresenta a visão inicial do produto e indica o que está
-            em construção para evitar navegação para páginas inexistentes.
+            As rotas das calculadoras ainda não estão disponíveis para uso.
+            Esta navegação funciona como um destaque visual do roadmap inicial,
+            sem depender de JavaScript para explicar o estado atual do produto.
           </p>
         </section>
 
         <section class="home-section" aria-labelledby="calculadoras-title">
-          <h2 class="home-heading" id="calculadoras-title">
-            Calculadoras planejadas
-          </h2>
+          <div>
+            <p class="home-kicker">Calculadoras planejadas</p>
+            <h2 class="home-heading" id="calculadoras-title">
+              Primeiras experiências previstas
+            </h2>
+          </div>
           <p class="home-text">
-            O produto foi pensado para apoiar análises práticas e comparações
-            rápidas antes de financiar, investir ou revisar alternativas.
+            O objetivo é evoluir esta base com ferramentas focadas em decisões
+            financeiras comuns do dia a dia, mantendo clareza, acessibilidade e
+            desempenho.
           </p>
           <ul class="home-grid">
-            {featureCards.map((feature: FeatureCard) => (
-              <li key={feature.href}>
-                <article class="home-card">
-                  <div class="home-card__header">
-                    <h3 class="home-card__title">{feature.title}</h3>
-                    <span class="home-card__badge">{feature.status}</span>
-                  </div>
-                  <p class="home-card__description">{feature.description}</p>
-                  <p class="home-card__hint">
-                    Navegação planejada para <code>{feature.href}</code>.
-                  </p>
-                </article>
+            {plannedCalculators.map((item: PlannedCalculator) => (
+              <li class="home-card" key={item.href}>
+                <div class="home-card__header">
+                  <h3 class="home-card__title">{item.title}</h3>
+                  <span class="home-card__badge">{item.status}</span>
+                </div>
+                <p class="home-card__description">{item.description}</p>
+                <p class="home-card__hint">
+                  Rota planejada: <code>{item.href}</code>
+                </p>
               </li>
             ))}
+          </ul>
+        </section>
+
+        <section class="home-section" aria-labelledby="proximos-passos-title">
+          <div>
+            <p class="home-kicker">Próximos passos</p>
+            <h2 class="home-heading" id="proximos-passos-title">
+              Evolução planejada do produto
+            </h2>
+          </div>
+          <p class="home-text">
+            As próximas entregas devem transformar esta navegação inicial em uma
+            experiência interativa, com cálculo em tempo real, histórico de
+            cenários e comparações entre alternativas.
+          </p>
+          <ul class="home-list">
+            <li>Publicar a primeira calculadora funcional.</li>
+            <li>Adicionar validação e feedback de formulário.</li>
+            <li>Permitir comparação entre cenários financeiros.</li>
           </ul>
         </section>
       </main>
