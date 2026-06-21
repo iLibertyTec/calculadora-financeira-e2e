@@ -26,7 +26,7 @@ const plannedCalculators: PlannedCalculator[] = [
     description:
       "Compare alternativas lado a lado para entender impacto de taxas, prazos e estratégias financeiras.",
     href: "/calculadoras/comparacao-de-cenarios",
-    status: "Em construção",
+    status: "Planejada",
   },
 ];
 
@@ -175,6 +175,26 @@ export default function HomePage() {
           list-style: none;
         }
 
+        .calculator-nav__search {
+          display: grid;
+          gap: 0.5rem;
+          max-width: 24rem;
+        }
+
+        .calculator-nav__search-label {
+          font-weight: 700;
+          color: var(--ink);
+        }
+
+        .calculator-nav__search-input {
+          min-height: 2.75rem;
+          padding: 0.75rem 1rem;
+          border: 1px solid var(--border);
+          border-radius: 0.85rem;
+          background: rgba(255, 255, 255, 0.03);
+          color: var(--ink);
+        }
+
         .calculator-nav__item {
           display: flex;
         }
@@ -208,6 +228,11 @@ export default function HomePage() {
           font-size: 0.85rem;
         }
 
+        .calculator-nav__empty {
+          margin: 0;
+          color: var(--muted);
+        }
+
         @media (min-width: 768px) {
           .home-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -231,23 +256,69 @@ export default function HomePage() {
             entregas.
           </p>
           <div class="home-actions">
-            <a class="home-link" href="#calculadoras-title">
-              Conhecer calculadoras planejadas
+            <a class="home-link" href="#calculadoras-planejadas">
+              Ver calculadoras planejadas
+            </a>
+            <a class="home-button" href="#proximos-passos">
+              Entender próximos passos
             </a>
           </div>
-          <div class="home-section" aria-labelledby="atalhos-title">
-            <h2 class="home-heading" id="atalhos-title">
-              Atalhos para as rotas planejadas
-            </h2>
-            <p class="home-text">
-              Os links abaixo já funcionam sem JavaScript e ajudam a preparar a
-              navegação para as próximas calculadoras.
-            </p>
-            <CalculatorNav items={plannedCalculators} />
-          </div>
+        </section>
+
+        <section class="home-section" aria-labelledby="visao-title">
+          <h2 class="home-heading" id="visao-title">Visão desta base inicial</h2>
+          <p class="home-text">
+            O produto está sendo preparado para receber calculadoras financeiras
+            específicas de forma incremental, com foco em experiência simples,
+            acessível e evolutiva.
+          </p>
+          <ul class="home-list">
+            <li>Navegação clara entre ferramentas planejadas.</li>
+            <li>Estrutura pronta para interatividade futura com islands.</li>
+            <li>Base adequada para expandir simulações sem refazer a home.</li>
+          </ul>
+        </section>
+
+        <section
+          class="home-section"
+          id="calculadoras-planejadas"
+          aria-labelledby="calculadoras-planejadas-title"
+        >
+          <h2 class="home-heading" id="calculadoras-planejadas-title">
+            Calculadoras planejadas
+          </h2>
+          <p class="home-text">
+            Use a navegação abaixo para destacar rapidamente as ferramentas já
+            mapeadas no roadmap. Sem JavaScript, os links continuam funcionando
+            normalmente.
+          </p>
+          <CalculatorNav items={plannedCalculators} />
+          <ul class="home-grid">
+            {plannedCalculators.map((calculator: PlannedCalculator) => (
+              <li key={calculator.href} class="home-card">
+                <div class="home-card__header">
+                  <h3 class="home-card__title">{calculator.title}</h3>
+                  <span class="home-card__badge">{calculator.status}</span>
+                </div>
+                <p class="home-card__description">{calculator.description}</p>
+                <p class="home-card__hint">Rota planejada: {calculator.href}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section
+          class="home-section"
+          id="proximos-passos"
+          aria-labelledby="proximos-passos-title"
+        >
+          <h2 class="home-heading" id="proximos-passos-title">
+            Próximos passos do roadmap
+          </h2>
           <p class="home-note">
-            As rotas das calculadoras já estão planejadas, mas o conteúdo de
-            cada uma ainda será implementado nas próximas entregas.
+            As próximas entregas devem transformar estas entradas planejadas em
+            calculadoras funcionais, mantendo a navegação consistente e
+            progressive enhancement como padrão.
           </p>
         </section>
       </main>
