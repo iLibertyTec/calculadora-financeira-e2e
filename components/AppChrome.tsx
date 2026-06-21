@@ -12,7 +12,7 @@ export default function AppChrome(props: AppChromeProps) {
       <header class="app-header">
         <div class="app-header__inner">
           <p class="app-eyebrow">Calculadora financeira</p>
-          <h1 class="app-title">{PRODUCT_NAME}</h1>
+          <p class="app-title">{PRODUCT_NAME}</p>
           <p class="app-subtitle">
             Simulações e análises com uma experiência simples, responsiva e
             acessível.

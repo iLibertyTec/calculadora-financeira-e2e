@@ -31,7 +31,7 @@ const featureCards: FeatureCard[] = [
 
 export default function HomePage() {
   return (
-    <section class="home">
+    <>
       <style>{`
         .home {
           display: grid;
@@ -55,8 +55,12 @@ export default function HomePage() {
 
         .home-heading {
           margin: 0;
-          font-size: clamp(1.75rem, 4vw, 2.5rem);
+          font-size: clamp(1.5rem, 3vw, 2rem);
           line-height: 1.15;
+        }
+
+        .home-heading--primary {
+          font-size: clamp(1.9rem, 4vw, 2.75rem);
         }
 
         .home-text,
@@ -118,14 +122,14 @@ export default function HomePage() {
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
-          color: var(--text);
+          color: var(--muted);
           font-weight: 700;
           text-decoration: none;
+          cursor: not-allowed;
         }
 
-        .home-card__link:hover,
-        .home-card__link:focus-visible {
-          color: var(--accent);
+        .home-card__link[aria-disabled="true"] {
+          opacity: 0.85;
         }
 
         .home-note {
@@ -144,70 +148,80 @@ export default function HomePage() {
         }
       `}</style>
 
-      <section class="home-hero" aria-labelledby="apresentacao-title">
-        <p class="home-kicker">Planejamento financeiro em pt-BR</p>
-        <h2 class="home-heading" id="apresentacao-title">
-          Bem-vindo à Calculadora Financeira
-        </h2>
-        <p class="home-text">
-          Esta página inicial apresenta a visão do produto e organiza o acesso
-          às calculadoras planejadas para apoiar decisões do dia a dia com mais
-          clareza.
-        </p>
-        <p class="home-text">
-          A proposta é oferecer ferramentas objetivas para simular cenários,
-          entender custos ao longo do tempo e comparar alternativas antes de
-          contratar, investir ou renegociar.
-        </p>
-      </section>
+      <div class="home">
+        <section class="home-hero" aria-labelledby="apresentacao-title">
+          <p class="home-kicker">Planejamento financeiro em pt-BR</p>
+          <h1 class="home-heading home-heading--primary" id="apresentacao-title">
+            Calculadora Financeira para simular, entender e comparar decisões
+          </h1>
+          <p class="home-text">
+            Esta página inicial apresenta a visão do produto e organiza o acesso
+            às calculadoras planejadas para apoiar decisões do dia a dia com
+            mais clareza.
+          </p>
+          <p class="home-text">
+            A proposta é oferecer ferramentas objetivas para simular cenários,
+            entender custos ao longo do tempo e comparar alternativas antes de
+            contratar, investir ou renegociar.
+          </p>
+        </section>
 
-      <section class="home-section" aria-labelledby="calculadoras-title">
-        <h2 class="home-heading" id="calculadoras-title">
-          Calculadoras planejadas
-        </h2>
-        <p class="home-text">
-          O roadmap inicial contempla módulos focados em análises práticas para
-          pessoas que precisam tomar decisões financeiras com mais confiança.
-        </p>
-        <ul class="home-list">
-          <li>
-            <strong>Financiamento:</strong> simulação de parcelas, entrada,
-            juros e custo total.
-          </li>
-          <li>
-            <strong>Juros compostos:</strong> projeções de crescimento com
-            aportes e rentabilidade recorrente.
-          </li>
-          <li>
-            <strong>Comparação de cenários:</strong> avaliação lado a lado entre
-            opções de prazo, taxa e estratégia.
-          </li>
-        </ul>
-      </section>
+        <section class="home-section" aria-labelledby="calculadoras-title">
+          <h2 class="home-heading" id="calculadoras-title">
+            Calculadoras planejadas
+          </h2>
+          <p class="home-text">
+            O roadmap inicial contempla módulos focados em análises práticas
+            para pessoas que precisam tomar decisões financeiras com mais
+            confiança.
+          </p>
+          <ul class="home-list">
+            <li>
+              <strong>Financiamento:</strong> simulação de parcelas, entrada,
+              juros e custo total.
+            </li>
+            <li>
+              <strong>Juros compostos:</strong> projeções de crescimento com
+              aportes e rentabilidade recorrente.
+            </li>
+            <li>
+              <strong>Comparação de cenários:</strong> avaliação lado a lado
+              entre opções de prazo, taxa e estratégia.
+            </li>
+          </ul>
+        </section>
 
-      <section class="home-section" aria-labelledby="navegacao-title">
-        <h2 class="home-heading" id="navegacao-title">
-          Navegação para funcionalidades futuras
-        </h2>
-        <div class="home-grid">
-          {featureCards.map((feature: FeatureCard) => (
-            <article class="home-card" key={feature.href}>
-              <div class="home-card__header">
-                <h3 class="home-card__title">{feature.title}</h3>
-                <span class="home-card__badge">{feature.status}</span>
-              </div>
-              <p class="home-card__description">{feature.description}</p>
-              <a class="home-card__link" href={feature.href}>
-                Conhecer esta funcionalidade
-              </a>
-            </article>
-          ))}
-        </div>
-        <p class="home-note">
-          As rotas acima já sinalizam a estrutura futura do produto e permitem
-          evoluir a navegação sem depender de JavaScript no cliente.
-        </p>
-      </section>
-    </section>
+        <section class="home-section" aria-labelledby="navegacao-title">
+          <h2 class="home-heading" id="navegacao-title">
+            Navegação para funcionalidades futuras
+          </h2>
+          <div class="home-grid">
+            {featureCards.map((feature: FeatureCard) => (
+              <article class="home-card" key={feature.href}>
+                <div class="home-card__header">
+                  <h3 class="home-card__title">{feature.title}</h3>
+                  <span class="home-card__badge">{feature.status}</span>
+                </div>
+                <p class="home-card__description">{feature.description}</p>
+                <a
+                  aria-disabled="true"
+                  class="home-card__link"
+                  href={feature.href}
+                  onClick={(event: MouseEvent) => event.preventDefault()}
+                  title="Funcionalidade planejada para uma próxima etapa"
+                >
+                  Rota planejada: {feature.href}
+                </a>
+              </article>
+            ))}
+          </div>
+          <p class="home-note">
+            As rotas acima já sinalizam a estrutura futura do produto e ajudam a
+            visualizar o roadmap. Nesta etapa inicial, os links estão marcados
+            como planejados e ainda não levam para telas funcionais.
+          </p>
+        </section>
+      </div>
+    </>
   );
 }
