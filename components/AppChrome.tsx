@@ -6,6 +6,8 @@ type AppChromeProps = {
 };
 
 export default function AppChrome(props: AppChromeProps) {
+  const currentYear: number = new Date().getFullYear();
+
   return (
     <div class="app-shell">
       <a class="skip-link" href="#conteudo-principal">Pular para o conteúdo</a>
@@ -24,7 +26,7 @@ export default function AppChrome(props: AppChromeProps) {
       </main>
       <footer class="app-footer">
         <div class="app-footer__inner">
-          <small>© {new Date().getFullYear()} {PRODUCT_NAME}</small>
+          <small>© {currentYear} {PRODUCT_NAME}</small>
         </div>
       </footer>
     </div>
