@@ -33,7 +33,7 @@ Deno.test("generateSacSchedule cria cronograma SAC conhecido", () => {
   assertEquals(schedule.installments[11]?.remainingBalance, 0);
 });
 
-Deno.test("generateSacSchedule ajusta saldo residual na última parcela", () => {
+Deno.test("generateSacSchedule ajusta saldo residual apenas na última parcela", () => {
   const schedule = generateSacSchedule(1000, 0.01, 3);
 
   assertObjectMatch(schedule.installments[0], {
@@ -110,7 +110,10 @@ Deno.test("generateSacSchedule mantém soma das amortizações em múltiplos pra
     );
 
     assertEquals(totalAmortization, 12345.67);
-    assertEquals(schedule.installments[schedule.installments.length - 1]?.remainingBalance, 0);
+    assertEquals(
+      schedule.installments[schedule.installments.length - 1]?.remainingBalance,
+      0,
+    );
   }
 });
 
@@ -124,7 +127,26 @@ Deno.test("generateSacSchedule mantém saldo devedor decrescente até zero", () 
     previousBalance = installment.remainingBalance;
   }
 
-  assertEquals(schedule.installments[schedule.installments.length - 1]?.remainingBalance, 0);
+  assertEquals(
+    schedule.installments[schedule.installments.length - 1]?.remainingBalance,
+    0,
+  );
+});
+
+Deno.test("generateSacSchedule é determinístico com taxa de alta precisão", () => {
+  const schedule = generateSacSchedule(1000.01, 0.012345678901, 7);
+  const totalAmortization: number = Number(
+    schedule.installments.reduce(
+      (sum: number, installment) => sum + installment.amortization,
+      0,
+    ).toFixed(2),
+  );
+
+  assertEquals(totalAmortization, 1000.01);
+  assertEquals(schedule.installments[0]?.amortization, 142.85);
+  assertEquals(schedule.installments[1]?.amortization, 142.85);
+  assertEquals(schedule.installments[6]?.amortization, 142.91);
+  assertEquals(schedule.installments[6]?.remainingBalance, 0);
 });
 
 Deno.test("generateSacSchedule rejeita prazo inválido", () => {
@@ -151,6 +173,13 @@ Deno.test("generateSacSchedule rejeita taxa inválida", () => {
   );
 });
 
+Deno.test("generateSacSchedule aceita menos zero como zero para taxa", () => {
+  const schedule = generateSacSchedule(12000, -0, 12);
+
+  assertEquals(schedule.monthlyRate, 0);
+  assertEquals(schedule.summary.totalInterest, 0);
+});
+
 Deno.test("generateSacSchedule rejeita entradas não finitas", () => {
   assertThrows(
     () => generateSacSchedule(Number.NaN, 0.01, 12),
@@ -174,6 +203,22 @@ Deno.test("generateSacSchedule rejeita valores monetários fora da faixa segura"
     () => generateSacSchedule(Number.MAX_SAFE_INTEGER / 100, 0.01, 12),
     Error,
     "money value is outside supported range",
+  );
+});
+
+Deno.test("generateSacSchedule aceita valor monetário no limite seguro", () => {
+  const safePrincipal: number = (Number.MAX_SAFE_INTEGER - 1) / 100;
+  const schedule = generateSacSchedule(safePrincipal, 0, 1);
+
+  assertEquals(schedule.principal, safePrincipal);
+  assertEquals(schedule.installments[0]?.remainingBalance, 0);
+});
+
+Deno.test("generateSacSchedule rejeita taxa fora da faixa suportada", () => {
+  assertThrows(
+    () => generateSacSchedule(12000, 1_000_000.000001, 12),
+    Error,
+    "monthlyRate is outside supported range",
   );
 });
 

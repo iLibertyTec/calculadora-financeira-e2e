@@ -21,6 +21,9 @@ export interface SacSchedule {
   readonly summary: SacSummary;
 }
 
+const MAX_SAFE_MONEY_VALUE: number = (Number.MAX_SAFE_INTEGER - 1) / 100;
+const MAX_SUPPORTED_MONTHLY_RATE: number = 1_000_000;
+
 export function generateSacSchedule(
   principal: number,
   monthlyRate: number,
@@ -32,11 +35,12 @@ export function generateSacSchedule(
 
   const principalCents: number = toMoneyCents(principal);
   const normalizedMonthlyRate: number = normalizeRate(monthlyRate);
-  const baseAmortizationCents: number = divideMoneyCents(principalCents, termMonths);
+  const baseAmortizationCents: number = Math.floor(principalCents / termMonths);
   const installments: SacInstallment[] = [];
   let remainingBalanceCents: number = principalCents;
   let totalPaidCents: number = 0;
   let totalInterestCents: number = 0;
+  let totalAmortizationCents: number = 0;
 
   for (let index = 1; index <= termMonths; index += 1) {
     const amortizationCents: number = index === termMonths
@@ -47,9 +51,10 @@ export function generateSacSchedule(
       normalizedMonthlyRate,
     );
     const paymentCents: number = sumMoneyCents(amortizationCents, interestCents);
-    const nextBalanceCents: number = index === termMonths
-      ? 0
-      : subtractMoneyCents(remainingBalanceCents, amortizationCents);
+    const nextBalanceCents: number = subtractMoneyCents(
+      remainingBalanceCents,
+      amortizationCents,
+    );
 
     installments.push(Object.freeze({
       number: index,
@@ -59,20 +64,21 @@ export function generateSacSchedule(
       remainingBalance: fromMoneyCents(nextBalanceCents),
     }));
 
+    totalAmortizationCents = sumMoneyCents(
+      totalAmortizationCents,
+      amortizationCents,
+    );
     totalPaidCents = sumMoneyCents(totalPaidCents, paymentCents);
     totalInterestCents = sumMoneyCents(totalInterestCents, interestCents);
     remainingBalanceCents = nextBalanceCents;
   }
 
-  const totalAmortizationCents: number = installments.reduce(
-    (sum: number, installment: SacInstallment) => {
-      return sumMoneyCents(sum, toMoneyCents(installment.amortization));
-    },
-    0,
-  );
-
   if (totalAmortizationCents !== principalCents) {
     throw new Error("schedule amortization must match principal");
+  }
+
+  if (remainingBalanceCents !== 0) {
+    throw new Error("schedule remaining balance must be zero");
   }
 
   const firstPayment: number = installments[0]?.payment ?? 0;
@@ -97,7 +103,9 @@ function validatePrincipal(principal: number): void {
     throw new Error("principal must be greater than zero");
   }
 
-  toMoneyCents(principal);
+  if (principal > MAX_SAFE_MONEY_VALUE) {
+    throw new Error("money value is outside supported range");
+  }
 }
 
 function validateMonthlyRate(monthlyRate: number): void {
@@ -105,7 +113,9 @@ function validateMonthlyRate(monthlyRate: number): void {
     throw new Error("monthlyRate must be zero or greater");
   }
 
-  normalizeRate(monthlyRate);
+  if (monthlyRate > MAX_SUPPORTED_MONTHLY_RATE) {
+    throw new Error("monthlyRate is outside supported range");
+  }
 }
 
 function validateTermMonths(termMonths: number): void {
@@ -118,23 +128,15 @@ function validateTermMonths(termMonths: number): void {
 }
 
 function normalizeRate(value: number): number {
-  if (!Number.isFinite(value)) {
-    throw new Error("monthlyRate must be zero or greater");
-  }
-
-  if (!Number.isSafeInteger(Math.round(value * 1_000_000_000_000))) {
-    throw new Error("monthlyRate is outside supported range");
-  }
-
   return Number(value.toFixed(12));
 }
 
 function toMoneyCents(value: number): number {
-  if (!Number.isFinite(value)) {
-    throw new Error("money value must be finite");
+  if (!Number.isFinite(value) || Math.abs(value) > MAX_SAFE_MONEY_VALUE) {
+    throw new Error("money value is outside supported range");
   }
 
-  const cents: number = Math.round((value + Number.EPSILON) * 100);
+  const cents: number = Math.round(value * 100);
 
   if (!Number.isSafeInteger(cents)) {
     throw new Error("money value is outside supported range");
@@ -151,23 +153,17 @@ function fromMoneyCents(value: number): number {
   return value / 100;
 }
 
-function divideMoneyCents(totalCents: number, divisor: number): number {
-  const quotient: number = Math.round((totalCents / divisor) * 100) / 100;
-  const cents: number = Math.round(quotient);
-
-  if (!Number.isSafeInteger(cents)) {
-    throw new Error("money division is outside supported range");
-  }
-
-  return cents;
-}
-
 function calculateInterestCents(
   balanceCents: number,
   monthlyRate: number,
 ): number {
-  const interestValue: number = fromMoneyCents(balanceCents) * monthlyRate;
-  return toMoneyCents(interestValue);
+  const interestCents: number = Math.round(balanceCents * monthlyRate);
+
+  if (!Number.isSafeInteger(interestCents)) {
+    throw new Error("interest value is outside supported range");
+  }
+
+  return interestCents;
 }
 
 function sumMoneyCents(left: number, right: number): number {
