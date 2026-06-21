@@ -2,7 +2,8 @@ export interface CompoundInterestInput {
   principal: number;
   /**
    * Taxa nominal anual em formato decimal.
-   * Ex.: 0.12 representa 12% ao ano com capitalização conforme compoundsPerYear.
+   * Ex.: 0.12 representa 12% ao ano com capitalização discreta
+   * conforme compoundsPerYear.
    */
   annualRate: number;
   years: number;
@@ -32,20 +33,20 @@ export function calculateCompoundInterest(
 
   const { principal, annualRate, years, compoundsPerYear } = input;
   const totalPeriodsExact: number = years * compoundsPerYear;
-  const roundedPeriods: number = Math.round(totalPeriodsExact);
-  const hasWholePeriodsOnly: boolean =
-    Math.abs(totalPeriodsExact - roundedPeriods) <= PERIOD_EPSILON;
-  const wholePeriods: number = hasWholePeriodsOnly
-    ? roundedPeriods
-    : Math.floor(totalPeriodsExact);
-  const finalPeriod: number = hasWholePeriodsOnly
-    ? wholePeriods
-    : totalPeriodsExact;
+  const totalPeriodsRounded: number = Math.round(totalPeriodsExact);
+
+  if (Math.abs(totalPeriodsExact - totalPeriodsRounded) > PERIOD_EPSILON) {
+    throw new RangeError(
+      "years must align with whole compounding periods for discrete compounding",
+    );
+  }
+
+  const totalPeriods: number = totalPeriodsRounded;
   const ratePerPeriod: number = annualRate / compoundsPerYear;
   const growthFactor: number = 1 + ratePerPeriod;
   const series: CompoundInterestPoint[] = [];
 
-  for (let period = 0; period <= wholePeriods; period += 1) {
+  for (let period = 0; period <= totalPeriods; period += 1) {
     const amount: number = principal * Math.pow(growthFactor, period);
     series.push({
       period,
@@ -55,17 +56,7 @@ export function calculateCompoundInterest(
     });
   }
 
-  if (!hasWholePeriodsOnly) {
-    const finalAmount: number = principal * Math.pow(growthFactor, finalPeriod);
-    series.push({
-      period: finalPeriod,
-      year: years,
-      amount: finalAmount,
-      accruedInterest: finalAmount - principal,
-    });
-  }
-
-  const finalAmount: number = principal * Math.pow(growthFactor, finalPeriod);
+  const finalAmount: number = principal * Math.pow(growthFactor, totalPeriods);
 
   return {
     principal,
@@ -97,8 +88,10 @@ function validateInput(input: CompoundInterestInput): void {
   }
 
   if (
-    !Number.isFinite(input.compoundsPerYear) || input.compoundsPerYear <= 0
+    !Number.isFinite(input.compoundsPerYear) ||
+    !Number.isInteger(input.compoundsPerYear) ||
+    input.compoundsPerYear <= 0
   ) {
-    throw new RangeError("compoundsPerYear must be a positive number");
+    throw new RangeError("compoundsPerYear must be a positive integer");
   }
 }

@@ -68,35 +68,30 @@ Deno.test("calculateCompoundInterest supports fractional years with whole period
   assertAlmostEquals(result.finalAmount, 5202.680155655079, 1e-12);
 });
 
-Deno.test("calculateCompoundInterest supports fractional periods outside the frequency grid", () => {
-  const result = calculateCompoundInterest({
-    principal: 1000,
-    annualRate: 0.1,
-    years: 1.1,
-    compoundsPerYear: 12,
-  });
+Deno.test("calculateCompoundInterest rejects years outside the compounding grid", () => {
+  assertThrows(
+    () =>
+      calculateCompoundInterest({
+        principal: 1000,
+        annualRate: 0.1,
+        years: 1.1,
+        compoundsPerYear: 12,
+      }),
+    RangeError,
+    "years must align with whole compounding periods for discrete compounding",
+  );
 
-  assertEquals(result.series.length, 15);
-  assertAlmostEquals(result.series[13].year, 13 / 12, 1e-12);
-  assertAlmostEquals(result.series[14].period, 13.200000000000001, 1e-12);
-  assertAlmostEquals(result.series[14].year, 1.1, 1e-12);
-  assertAlmostEquals(result.finalAmount, 1115.8462987816868, 1e-12);
-  assertAlmostEquals(result.accruedInterest, 115.84629878168683, 1e-12);
-});
-
-Deno.test("calculateCompoundInterest handles periods smaller than one full compounding interval", () => {
-  const result = calculateCompoundInterest({
-    principal: 1000,
-    annualRate: 0.12,
-    years: 0.05,
-    compoundsPerYear: 12,
-  });
-
-  assertEquals(result.series.length, 2);
-  assertEquals(result.series[0].period, 0);
-  assertAlmostEquals(result.series[1].period, 0.6000000000000001, 1e-12);
-  assertAlmostEquals(result.series[1].year, 0.05, 1e-12);
-  assertAlmostEquals(result.finalAmount, 1005.9880556662681, 1e-12);
+  assertThrows(
+    () =>
+      calculateCompoundInterest({
+        principal: 1000,
+        annualRate: 0.12,
+        years: 0.05,
+        compoundsPerYear: 12,
+      }),
+    RangeError,
+    "years must align with whole compounding periods for discrete compounding",
+  );
 });
 
 Deno.test("calculateCompoundInterest tolerates floating-point imprecision in periods", () => {
@@ -108,8 +103,23 @@ Deno.test("calculateCompoundInterest tolerates floating-point imprecision in per
   });
 
   assertEquals(result.series.length, 4);
+  assertEquals(result.series.map((point) => point.period), [0, 1, 2, 3]);
   assertAlmostEquals(result.series[3].year, 0.3, 1e-12);
-  assertAlmostEquals(result.finalAmount, 1036.3636363636363, 1e-12);
+  assertAlmostEquals(result.finalAmount, 1036.432768, 1e-12);
+});
+
+Deno.test("calculateCompoundInterest rejects values just outside the period tolerance", () => {
+  assertThrows(
+    () =>
+      calculateCompoundInterest({
+        principal: 1000,
+        annualRate: 0.12,
+        years: (3 + 2e-10) / 10,
+        compoundsPerYear: 10,
+      }),
+    RangeError,
+    "years must align with whole compounding periods for discrete compounding",
+  );
 });
 
 Deno.test("calculateCompoundInterest handles zero principal and zero years", () => {
@@ -155,7 +165,7 @@ Deno.test("calculateCompoundInterest validates numeric boundaries", () => {
         compoundsPerYear: 1,
       }),
     RangeError,
-    "principal must be a finite number",
+    "principal must be a finite number greater than or equal to zero",
   );
 
   assertThrows(
@@ -167,8 +177,21 @@ Deno.test("calculateCompoundInterest validates numeric boundaries", () => {
         compoundsPerYear: 0,
       }),
     RangeError,
-    "compoundsPerYear must be a positive number",
+    "compoundsPerYear must be a positive integer",
   );
+
+  assertThrows(
+    () =>
+      calculateCompoundInterest({
+        principal: 100,
+        annualRate: 0.1,
+        years: 1,
+        compoundsPerYear: 12.5,
+      }),
+    RangeError,
+    "compoundsPerYear must be a positive integer",
+  );
+
   assertThrows(
     () =>
       calculateCompoundInterest({
@@ -180,6 +203,7 @@ Deno.test("calculateCompoundInterest validates numeric boundaries", () => {
     RangeError,
     "annualRate must be a finite number",
   );
+
   assertThrows(
     () =>
       calculateCompoundInterest({
@@ -203,7 +227,19 @@ Deno.test("calculateCompoundInterest validates infinities", () => {
         compoundsPerYear: 1,
       }),
     RangeError,
-    "principal must be a finite number",
+    "principal must be a finite number greater than or equal to zero",
+  );
+
+  assertThrows(
+    () =>
+      calculateCompoundInterest({
+        principal: 100,
+        annualRate: Number.POSITIVE_INFINITY,
+        years: 1,
+        compoundsPerYear: 1,
+      }),
+    RangeError,
+    "annualRate must be a finite number",
   );
 
   assertThrows(
@@ -211,10 +247,10 @@ Deno.test("calculateCompoundInterest validates infinities", () => {
       calculateCompoundInterest({
         principal: 100,
         annualRate: 0.1,
-        years: Number.NEGATIVE_INFINITY,
+        years: Number.POSITIVE_INFINITY,
         compoundsPerYear: 1,
       }),
     RangeError,
-    "years must be a finite number",
+    "years must be a finite number greater than or equal to zero",
   );
 });
