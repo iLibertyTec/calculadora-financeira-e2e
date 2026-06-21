@@ -20,6 +20,14 @@ Deno.test("roundMoney trata frações de centavo de forma previsível", () => {
   assertEquals(roundMoney(2.675), 2.68);
 });
 
+Deno.test("roundMoney aplica regra simétrica para valores negativos", () => {
+  assertEquals(roundMoney(-0.004), -0);
+  assertEquals(roundMoney(-0.005), -0.01);
+  assertEquals(roundMoney(-0.015), -0.02);
+  assertEquals(roundMoney(-1.005), -1.01);
+  assertEquals(roundMoney(-2.675), -2.68);
+});
+
 Deno.test("toCents converte valores positivos usados em cronogramas para centavos", () => {
   assertEquals(toCents(123.45), 12345);
   assertEquals(toCents(199.994), 19999);
@@ -27,11 +35,19 @@ Deno.test("toCents converte valores positivos usados em cronogramas para centavo
   assertEquals(toCents(1500.1), 150010);
 });
 
+Deno.test("toCents converte valores negativos de forma simétrica e previsível", () => {
+  assertEquals(toCents(-123.45), -12345);
+  assertEquals(toCents(-199.994), -19999);
+  assertEquals(toCents(-199.995), -20000);
+  assertEquals(toCents(-1500.1), -150010);
+});
+
 Deno.test("fromCents converte centavos para duas casas decimais", () => {
   assertEquals(fromCents(0), 0);
   assertEquals(fromCents(1), 0.01);
   assertEquals(fromCents(1050), 10.5);
   assertEquals(fromCents(12345), 123.45);
+  assertEquals(fromCents(-12345), -123.45);
 });
 
 Deno.test("toCents e fromCents mantêm consistência para parcelas, juros e saldo", () => {
@@ -42,4 +58,14 @@ Deno.test("toCents e fromCents mantêm consistência para parcelas, juros e sald
   assertEquals(fromCents(toCents(parcela)), 1234.57);
   assertEquals(fromCents(toCents(juros)), 98.77);
   assertEquals(fromCents(toCents(saldo)), 10000.56);
+});
+
+Deno.test("toCents e fromCents mantêm consistência para estornos e ajustes", () => {
+  const estorno: number = -1234.567;
+  const ajuste: number = -98.765;
+  const saldo: number = -10000.555;
+
+  assertEquals(fromCents(toCents(estorno)), -1234.57);
+  assertEquals(fromCents(toCents(ajuste)), -98.77);
+  assertEquals(fromCents(toCents(saldo)), -10000.56);
 });
