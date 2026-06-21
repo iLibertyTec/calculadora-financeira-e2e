@@ -1,11 +1,13 @@
-type FeatureCard = {
-  title: string;
+import AppChrome from "../components/AppChrome.tsx";
+import CalculatorNav, {
+  type PlannedCalculatorNavItem,
+} from "../islands/CalculatorNav.tsx";
+
+type PlannedCalculator = PlannedCalculatorNavItem & {
   description: string;
-  href: string;
-  status: string;
 };
 
-const featureCards: FeatureCard[] = [
+const plannedCalculators: PlannedCalculator[] = [
   {
     title: "Financiamento",
     description:
@@ -25,13 +27,13 @@ const featureCards: FeatureCard[] = [
     description:
       "Compare alternativas lado a lado para entender impacto de taxas, prazos e estratégias financeiras.",
     href: "/calculadoras/comparacao-de-cenarios",
-    status: "Em construção",
+    status: "Planejada",
   },
 ];
 
 export default function HomePage() {
   return (
-    <>
+    <AppChrome>
       <style>{`
         .home {
           display: grid;
@@ -165,6 +167,54 @@ export default function HomePage() {
           color: var(--muted);
         }
 
+        .calculator-nav {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+          padding: 0;
+          margin: 0;
+          list-style: none;
+        }
+
+        .calculator-nav__intro {
+          margin: 0;
+          color: var(--muted);
+          line-height: 1.6;
+        }
+
+        .calculator-nav__item {
+          display: flex;
+        }
+
+        .calculator-nav__link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          min-height: 2.75rem;
+          padding: 0.75rem 1rem;
+          border: 1px solid var(--border);
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.03);
+          color: var(--ink);
+          text-decoration: none;
+        }
+
+        .calculator-nav__link:hover,
+        .calculator-nav__link:focus-visible {
+          border-color: rgba(122, 162, 255, 0.45);
+          background: rgba(79, 125, 255, 0.08);
+          outline: none;
+        }
+
+        .calculator-nav__title {
+          font-weight: 700;
+        }
+
+        .calculator-nav__status {
+          color: var(--muted);
+          font-size: 0.85rem;
+        }
+
         @media (min-width: 768px) {
           .home-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -172,79 +222,79 @@ export default function HomePage() {
         }
       `}</style>
 
-      <main class="home" id="conteudo-principal">
+      <div class="home">
         <section class="home-hero" aria-labelledby="apresentacao-title">
           <p class="home-kicker">Versão inicial do produto</p>
-          <h1 class="home-heading home-heading--primary" id="apresentacao-title">
-            Calculadora Financeira para simular decisões com mais clareza
-          </h1>
-          <p class="home-text">
-            Esta é a página inicial da Calculadora Financeira, uma base para
-            reunir ferramentas de simulação e análise em português do Brasil.
-          </p>
-          <p class="home-text">
-            Nesta primeira versão, você pode conhecer a proposta do produto e
-            visualizar quais calculadoras estão planejadas para as próximas
-            entregas.
-          </p>
-          <div class="home-actions">
-            <a class="home-link" href="#calculadoras-title">
-              Conhecer calculadoras planejadas
-            </a>
-          </div>
-          <p class="home-note">
-            As rotas das calculadoras ainda não estão disponíveis nesta etapa.
-            Esta home apresenta a visão inicial do produto e indica o que está
-            em construção para evitar navegação para páginas inexistentes.
-          </p>
-        </section>
-
-        <section class="home-section" aria-labelledby="calculadoras-title">
-          <h2 class="home-heading" id="calculadoras-title">
-            Calculadoras planejadas
+          <h2 class="home-heading home-heading--primary" id="apresentacao-title">
+            Simulações financeiras com base sólida para as próximas etapas.
           </h2>
           <p class="home-text">
-            O produto foi pensado para apoiar análises práticas e comparações
-            rápidas antes de financiar, investir ou revisar alternativas.
+            Esta home apresenta a direção do produto e já deixa pronta a
+            estrutura de navegação para futuras calculadoras interativas.
           </p>
+          <div class="home-actions">
+            <a class="home-link" href="#calculadoras-planejadas">
+              Ver calculadoras planejadas
+            </a>
+            <a class="home-button" href="#proximos-passos">
+              Entender roadmap inicial
+            </a>
+          </div>
+        </section>
+
+        <section
+          class="home-section"
+          aria-labelledby="calculadoras-planejadas-title"
+          id="calculadoras-planejadas"
+        >
+          <h2 class="home-heading" id="calculadoras-planejadas-title">
+            Navegação planejada
+          </h2>
+          <p class="home-text">
+            A lista abaixo organiza os acessos previstos para o produto e serve
+            como base segura para evoluções client-side futuras.
+          </p>
+          <CalculatorNav items={plannedCalculators} />
+        </section>
+
+        <section class="home-section" aria-labelledby="recursos-title">
+          <h2 class="home-heading" id="recursos-title">
+            Calculadoras priorizadas
+          </h2>
           <ul class="home-grid">
-            {featureCards.map((feature: FeatureCard) => (
-              <li key={feature.href}>
-                <article class="home-card">
-                  <div class="home-card__header">
-                    <h3 class="home-card__title">{feature.title}</h3>
-                    <span class="home-card__badge">{feature.status}</span>
-                  </div>
-                  <p class="home-card__description">{feature.description}</p>
-                  <p class="home-card__hint">
-                    Rota planejada: <code>{feature.href}</code>
-                  </p>
-                  <p class="home-card__hint">
-                    Disponibilidade atual: funcionalidade ainda indisponível.
-                  </p>
-                </article>
+            {plannedCalculators.map((calculator: PlannedCalculator) => (
+              <li key={calculator.href} class="home-card">
+                <div class="home-card__header">
+                  <h3 class="home-card__title">{calculator.title}</h3>
+                  <span class="home-card__badge">{calculator.status}</span>
+                </div>
+                <p class="home-card__description">{calculator.description}</p>
+                <p class="home-card__hint">Rota planejada: {calculator.href}</p>
               </li>
             ))}
           </ul>
         </section>
 
-        <section class="home-section" aria-labelledby="proximos-passos-title">
+        <section
+          class="home-section"
+          aria-labelledby="proximos-passos-title"
+          id="proximos-passos"
+        >
           <h2 class="home-heading" id="proximos-passos-title">
-            Próximos passos do produto
+            Próximos passos
           </h2>
-          <p class="home-text">
-            As próximas entregas devem transformar essas áreas em calculadoras
-            utilizáveis, com formulários, resultados detalhados e comparação de
-            cenários sem exigir JavaScript obrigatório para acessar o conteúdo
-            principal.
+          <p class="home-note">
+            Entregas iniciais previstas: simulador de financiamento, projeção de
+            juros compostos e comparação de cenários com foco em clareza,
+            acessibilidade e evolução incremental.
           </p>
           <ul class="home-list">
-            <li>Simulação de financiamento com parcelas e custo total.</li>
-            <li>Projeção de juros compostos com aportes recorrentes.</li>
-            <li>Comparação entre cenários financeiros lado a lado.</li>
+            <li>Publicar a primeira calculadora com validações simples.</li>
+            <li>Adicionar resultados interpretáveis e compartilháveis.</li>
+            <li>Expandir a navegação planejada conforme novas rotas surgirem.</li>
           </ul>
         </section>
-      </main>
-    </>
+      </div>
+    </AppChrome>
   );
 }
