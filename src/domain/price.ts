@@ -18,16 +18,16 @@ export function calculatePriceAmortization(
   ensureValidFinancingInput(input);
 
   const { principal, monthlyRate, months } = input;
+  const isZeroRate: boolean = Math.abs(monthlyRate) < Number.EPSILON;
 
-  const monthlyPayment: number = monthlyRate === 0
-    ? roundCurrency(principal / months)
-    : roundCurrency(
-      principal *
-        ((monthlyRate * (1 + monthlyRate) ** months) /
-          ((1 + monthlyRate) ** months - 1)),
-    );
+  const rawMonthlyPayment: number = isZeroRate
+    ? principal / months
+    : principal *
+      ((monthlyRate * (1 + monthlyRate) ** months) /
+        ((1 + monthlyRate) ** months - 1));
 
-  const totalPaid: number = roundCurrency(monthlyPayment * months);
+  const monthlyPayment: number = roundCurrency(rawMonthlyPayment);
+  const totalPaid: number = roundCurrency(rawMonthlyPayment * months);
   const totalInterest: number = roundCurrency(totalPaid - principal);
 
   return {
