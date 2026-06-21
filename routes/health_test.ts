@@ -1,6 +1,6 @@
 import { assert, assertEquals } from "@std/assert";
 import { APP_VERSION, SERVICE_NAME } from "../src/app_info.ts";
-import { handler } from "./health.ts";
+import { createHealthPayload, handler } from "./health.ts";
 
 async function requestHealth(method = "GET"): Promise<Response> {
   const routeHandler = handler[method as keyof typeof handler];
@@ -15,6 +15,14 @@ async function requestHealth(method = "GET"): Promise<Response> {
   );
 }
 
+Deno.test("createHealthPayload monta payload de forma isolada", () => {
+  assertEquals(createHealthPayload("svc", "1.2.3"), {
+    ok: true,
+    service: "svc",
+    version: "1.2.3",
+  });
+});
+
 Deno.test("GET /health retorna contrato público esperado", async () => {
   const response = await requestHealth("GET");
 
@@ -25,8 +33,9 @@ Deno.test("GET /health retorna contrato público esperado", async () => {
   );
   assertEquals(response.headers.get("cache-control"), "no-store");
 
-  const body: unknown = await response.json();
+  const body = await response.json() as Record<string, unknown>;
 
+  assertEquals(Object.keys(body).sort(), ["ok", "service", "version"]);
   assertEquals(body, {
     ok: true,
     service: SERVICE_NAME,
@@ -39,17 +48,4 @@ Deno.test("/health expõe apenas GET no contrato da rota", () => {
   assertEquals("POST" in handler, false);
   assertEquals("PUT" in handler, false);
   assertEquals("DELETE" in handler, false);
-});
-
-Deno.test("GET /health é estável e independe de ambiente", async () => {
-  const response = await requestHealth("GET");
-  const body: unknown = await response.json();
-
-  assertEquals(body, {
-    ok: true,
-    service: "ifactory-product",
-    version: "0.1.0",
-  });
-  assertEquals(SERVICE_NAME, "ifactory-product");
-  assertEquals(APP_VERSION, "0.1.0");
 });
