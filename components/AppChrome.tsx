@@ -24,7 +24,7 @@ export default function AppChrome(props: AppChromeProps) {
       </main>
       <footer class="app-footer">
         <div class="app-footer__inner">
-          <small>© {new Date().getFullYear()} {PRODUCT_NAME}</small>
+          <small>© 2025 {PRODUCT_NAME}</small>
         </div>
       </footer>
     </div>
