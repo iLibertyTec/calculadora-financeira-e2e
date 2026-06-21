@@ -1,10 +1,9 @@
-import CalculatorNav from "../islands/CalculatorNav.tsx";
+import CalculatorNav, {
+  type PlannedCalculatorNavItem,
+} from "../islands/CalculatorNav.tsx";
 
-type PlannedCalculator = {
-  title: string;
+type PlannedCalculator = PlannedCalculatorNavItem & {
   description: string;
-  href: string;
-  status: string;
 };
 
 const plannedCalculators: PlannedCalculator[] = [
@@ -193,6 +192,13 @@ export default function HomePage() {
           text-decoration: none;
         }
 
+        .calculator-nav__link:hover,
+        .calculator-nav__link:focus-visible {
+          border-color: rgba(122, 162, 255, 0.45);
+          background: rgba(79, 125, 255, 0.08);
+          outline: none;
+        }
+
         .calculator-nav__title {
           font-weight: 700;
         }
@@ -229,59 +235,20 @@ export default function HomePage() {
               Conhecer calculadoras planejadas
             </a>
           </div>
-          <CalculatorNav items={plannedCalculators} />
+          <div class="home-section" aria-labelledby="atalhos-title">
+            <h2 class="home-heading" id="atalhos-title">
+              Atalhos para as rotas planejadas
+            </h2>
+            <p class="home-text">
+              Os links abaixo já funcionam sem JavaScript e ajudam a preparar a
+              navegação para as próximas calculadoras.
+            </p>
+            <CalculatorNav items={plannedCalculators} />
+          </div>
           <p class="home-note">
-            As rotas das calculadoras ainda não estão disponíveis para uso.
-            Esta navegação funciona como um destaque visual do roadmap inicial,
-            sem depender de JavaScript para explicar o estado atual do produto.
+            As rotas das calculadoras já estão planejadas, mas o conteúdo de
+            cada uma ainda será implementado nas próximas entregas.
           </p>
-        </section>
-
-        <section class="home-section" aria-labelledby="calculadoras-title">
-          <div>
-            <p class="home-kicker">Calculadoras planejadas</p>
-            <h2 class="home-heading" id="calculadoras-title">
-              Primeiras experiências previstas
-            </h2>
-          </div>
-          <p class="home-text">
-            O objetivo é evoluir esta base com ferramentas focadas em decisões
-            financeiras comuns do dia a dia, mantendo clareza, acessibilidade e
-            desempenho.
-          </p>
-          <ul class="home-grid">
-            {plannedCalculators.map((item: PlannedCalculator) => (
-              <li class="home-card" key={item.href}>
-                <div class="home-card__header">
-                  <h3 class="home-card__title">{item.title}</h3>
-                  <span class="home-card__badge">{item.status}</span>
-                </div>
-                <p class="home-card__description">{item.description}</p>
-                <p class="home-card__hint">
-                  Rota planejada: <code>{item.href}</code>
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section class="home-section" aria-labelledby="proximos-passos-title">
-          <div>
-            <p class="home-kicker">Próximos passos</p>
-            <h2 class="home-heading" id="proximos-passos-title">
-              Evolução planejada do produto
-            </h2>
-          </div>
-          <p class="home-text">
-            As próximas entregas devem transformar esta navegação inicial em uma
-            experiência interativa, com cálculo em tempo real, histórico de
-            cenários e comparações entre alternativas.
-          </p>
-          <ul class="home-list">
-            <li>Publicar a primeira calculadora funcional.</li>
-            <li>Adicionar validação e feedback de formulário.</li>
-            <li>Permitir comparação entre cenários financeiros.</li>
-          </ul>
         </section>
       </main>
     </>

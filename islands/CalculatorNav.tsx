@@ -1,23 +1,23 @@
-type PlannedCalculator = {
+export type PlannedCalculatorNavItem = {
   title: string;
   href: string;
   status: string;
 };
 
 type CalculatorNavProps = {
-  items: PlannedCalculator[];
+  items: PlannedCalculatorNavItem[];
 };
 
 export default function CalculatorNav(props: CalculatorNavProps) {
   return (
-    <nav aria-label="Visão rápida das calculadoras planejadas">
+    <nav aria-label="Calculadoras planejadas">
       <ul class="calculator-nav">
-        {props.items.map((item: PlannedCalculator) => (
+        {props.items.map((item: PlannedCalculatorNavItem) => (
           <li key={item.href} class="calculator-nav__item">
-            <span class="calculator-nav__link" role="text">
+            <a class="calculator-nav__link" href={item.href}>
               <span class="calculator-nav__title">{item.title}</span>
               <span class="calculator-nav__status">{item.status}</span>
-            </span>
+            </a>
           </li>
         ))}
       </ul>
