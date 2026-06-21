@@ -1,7 +1,10 @@
-import { App } from "$fresh";
+import { App, staticFiles } from "$fresh";
 import { fsRoutes } from "$fresh/fs-routes";
-import { define } from "$fresh/server";
 
-const app = new App().use(fsRoutes());
+const app: App = new App().use(staticFiles()).use(fsRoutes());
 
-export default define(app);
+if (import.meta.main) {
+  await app.listen();
+}
+
+export default app;
