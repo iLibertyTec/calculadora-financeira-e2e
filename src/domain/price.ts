@@ -47,30 +47,29 @@ export function calculatePriceSchedule(
     throw new Error("termMonths must be a positive integer");
   }
 
-  const rawPayment = monthlyRate === 0
+  const rawPayment: number = monthlyRate === 0
     ? principal / termMonths
     : principal * monthlyRate / (1 - Math.pow(1 + monthlyRate, -termMonths));
-  const monthlyPayment = roundCurrency(rawPayment);
+  const monthlyPayment: number = roundCurrency(rawPayment);
 
   const installments: PriceInstallment[] = [];
   let remainingBalance: number = principal;
 
   for (let period = 1; period <= termMonths; period += 1) {
-    const roundedBalance: number = roundCurrency(remainingBalance);
     const interest: number = roundCurrency(remainingBalance * monthlyRate);
+    const isLastPeriod: boolean = period === termMonths;
+
     let payment: number = monthlyPayment;
     let amortization: number = roundCurrency(payment - interest);
-    let balance: number = roundCurrency(roundedBalance - amortization);
+    let nextBalance: number = remainingBalance - amortization;
 
-    if (period === termMonths) {
-      amortization = roundedBalance;
-      payment = roundCurrency(amortization + interest);
-      balance = 0;
-    } else if (amortization > roundedBalance) {
-      amortization = roundedBalance;
-      payment = roundCurrency(amortization + interest);
-      balance = 0;
+    if (isLastPeriod || nextBalance <= 0.005) {
+      amortization = roundCurrency(remainingBalance);
+      payment = roundCurrency(interest + amortization);
+      nextBalance = 0;
     }
+
+    const balance: number = roundCurrency(nextBalance);
 
     installments.push({
       period,
@@ -80,7 +79,7 @@ export function calculatePriceSchedule(
       balance,
     });
 
-    remainingBalance = remainingBalance - amortization;
+    remainingBalance = nextBalance;
   }
 
   const totalPaid: number = roundCurrency(
