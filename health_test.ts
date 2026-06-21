@@ -13,6 +13,8 @@ Deno.test("GET /health returns the service contract", async () => {
   const body = await res.json() as HealthResponse;
 
   assertEquals(res.status, 200);
+  assertEquals(res.headers.get("content-type"), "application/json; charset=utf-8");
+  assertEquals(res.headers.get("cache-control"), "no-store");
   assertEquals(body, {
     ok: true,
     service: SERVICE_INFO.name,
