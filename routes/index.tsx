@@ -1,3 +1,5 @@
+import CalculatorNav from "../islands/CalculatorNav.tsx";
+
 type FeatureCard = {
   title: string;
   description: string;
@@ -165,6 +167,41 @@ export default function HomePage() {
           color: var(--muted);
         }
 
+        .calculator-nav {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+          padding: 0;
+          margin: 0;
+          list-style: none;
+        }
+
+        .calculator-nav__item {
+          display: flex;
+        }
+
+        .calculator-nav__link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          min-height: 2.75rem;
+          padding: 0.75rem 1rem;
+          border: 1px solid var(--border);
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.03);
+          color: var(--ink);
+          text-decoration: none;
+        }
+
+        .calculator-nav__title {
+          font-weight: 700;
+        }
+
+        .calculator-nav__status {
+          color: var(--muted);
+          font-size: 0.85rem;
+        }
+
         @media (min-width: 768px) {
           .home-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -192,6 +229,7 @@ export default function HomePage() {
               Conhecer calculadoras planejadas
             </a>
           </div>
+          <CalculatorNav items={featureCards} />
           <p class="home-note">
             As rotas das calculadoras ainda não estão disponíveis nesta etapa.
             Esta home apresenta a visão inicial do produto e indica o que está
@@ -217,31 +255,11 @@ export default function HomePage() {
                   </div>
                   <p class="home-card__description">{feature.description}</p>
                   <p class="home-card__hint">
-                    Rota planejada: <code>{feature.href}</code>
-                  </p>
-                  <p class="home-card__hint">
-                    Disponibilidade atual: funcionalidade ainda indisponível.
+                    Navegação planejada para <code>{feature.href}</code>.
                   </p>
                 </article>
               </li>
             ))}
-          </ul>
-        </section>
-
-        <section class="home-section" aria-labelledby="proximos-passos-title">
-          <h2 class="home-heading" id="proximos-passos-title">
-            Próximos passos do produto
-          </h2>
-          <p class="home-text">
-            As próximas entregas devem transformar essas áreas em calculadoras
-            utilizáveis, com formulários, resultados detalhados e comparação de
-            cenários sem exigir JavaScript obrigatório para acessar o conteúdo
-            principal.
-          </p>
-          <ul class="home-list">
-            <li>Simulação de financiamento com parcelas e custo total.</li>
-            <li>Projeção de juros compostos com aportes recorrentes.</li>
-            <li>Comparação entre cenários financeiros lado a lado.</li>
           </ul>
         </section>
       </main>
