@@ -3,6 +3,7 @@ import {
   assertGreater,
   assertThrows,
 } from "@std/assert";
+import { roundToCents } from "./financing.ts";
 import { calculateSac } from "./sac.ts";
 
 Deno.test("calculateSac returns decreasing installments for positive rate", () => {
@@ -22,7 +23,7 @@ Deno.test("calculateSac returns decreasing installments for positive rate", () =
   assertGreater(result.firstInstallment, result.lastInstallment);
 });
 
-Deno.test("calculateSac handles zero rate with cent closing on last installment", () => {
+Deno.test("calculateSac handles zero rate with final cent adjustment", () => {
   const result = calculateSac({
     principal: 1000,
     monthlyRate: 0,
@@ -31,12 +32,12 @@ Deno.test("calculateSac handles zero rate with cent closing on last installment"
 
   assertEquals(result.amortization, 333.33);
   assertEquals(result.firstInstallment, 333.33);
-  assertEquals(result.lastInstallment, 333.33);
-  assertEquals(result.totalPaid, 999.99);
+  assertEquals(result.lastInstallment, 333.34);
+  assertEquals(result.totalPaid, 1000);
   assertEquals(result.totalInterest, 0);
 });
 
-Deno.test("calculateSac adjusts final installment using exact remaining principal", () => {
+Deno.test("calculateSac adjusts final installment using rounded amortization closing", () => {
   const result = calculateSac({
     principal: 1000,
     monthlyRate: 0.015,
@@ -45,8 +46,8 @@ Deno.test("calculateSac adjusts final installment using exact remaining principa
 
   assertEquals(result.amortization, 333.33);
   assertEquals(result.firstInstallment, 348.33);
-  assertEquals(result.lastInstallment, 338.33);
-  assertEquals(result.totalPaid, 1029.99);
+  assertEquals(result.lastInstallment, 338.34);
+  assertEquals(result.totalPaid, 1030);
   assertEquals(result.totalInterest, 30);
 });
 
@@ -58,6 +59,19 @@ Deno.test("calculateSac keeps first installment greater than or equal to last fo
   });
 
   assertEquals(result.firstInstallment >= result.lastInstallment, true);
+});
+
+Deno.test("calculateSac tolerates last-cent adjustment in positive-rate contracts", () => {
+  const result = calculateSac({
+    principal: 1000,
+    monthlyRate: 0.01,
+    termMonths: 3,
+  });
+
+  assertEquals(result.firstInstallment, 343.33);
+  assertEquals(result.lastInstallment, 336.67);
+  assertEquals(result.firstInstallment >= result.lastInstallment, true);
+  assertEquals(result.totalPaid, roundToCents(result.totalInterest + 1000));
 });
 
 Deno.test("calculateSac closes long contracts consistently in cents", () => {

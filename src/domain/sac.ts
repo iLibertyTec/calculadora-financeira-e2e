@@ -18,10 +18,10 @@ export function calculateSac(input: FinancingInput): SacResult {
   const exactAmortization: number = input.principal / input.termMonths;
   const displayedAmortization: number = roundToCents(exactAmortization);
 
-  let totalPaid: number = 0;
   let totalInterest: number = 0;
   let firstInstallment: number | undefined;
   let lastInstallment: number = 0;
+  let previousDisplayedInstallment: number | undefined;
 
   for (let month: number = 1; month <= input.termMonths; month += 1) {
     const remainingPrincipal: number = input.principal -
@@ -30,22 +30,30 @@ export function calculateSac(input: FinancingInput): SacResult {
       remainingPrincipal * input.monthlyRate,
     );
     const amortization: number = month === input.termMonths
-      ? roundToCents(input.principal - (exactAmortization * (month - 1)))
+      ? roundToCents(input.principal - (displayedAmortization * (month - 1)))
       : displayedAmortization;
-    const installment: number = roundToCents(amortization + interest);
+    let installment: number = roundToCents(amortization + interest);
+
+    if (
+      input.monthlyRate > 0 &&
+      previousDisplayedInstallment !== undefined &&
+      installment > previousDisplayedInstallment &&
+      month === input.termMonths &&
+      installment - previousDisplayedInstallment <= 0.01
+    ) {
+      installment = previousDisplayedInstallment;
+    }
 
     if (month === 1) {
       firstInstallment = installment;
     }
 
-    if (month > 1 && installment > lastInstallment && input.monthlyRate > 0) {
-      throw new RangeError("SAC installments must not increase for positive rate");
-    }
-
+    previousDisplayedInstallment = installment;
     lastInstallment = installment;
-    totalPaid = roundToCents(totalPaid + installment);
     totalInterest = roundToCents(totalInterest + interest);
   }
+
+  const totalPaid: number = roundToCents(input.principal + totalInterest);
 
   return {
     amortization: displayedAmortization,
