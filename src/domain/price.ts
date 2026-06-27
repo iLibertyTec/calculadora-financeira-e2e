@@ -16,22 +16,35 @@ export interface PriceCalculationResult {
   totalInterest: number;
 }
 
+function calculateRawMonthlyPayment(
+  principal: number,
+  monthlyRate: number,
+  months: number,
+): number {
+  if (isEffectivelyZeroRate(monthlyRate)) {
+    return principal / months;
+  }
+
+  const logFactor: number = -months * Math.log1p(monthlyRate);
+  const denominator: number = -Math.expm1(logFactor);
+
+  return principal * (monthlyRate / denominator);
+}
+
 export function calculatePriceAmortization(
   input: PriceCalculationInput,
 ): PriceCalculationResult {
   ensureValidFinancingInput(input);
 
   const { principal, monthlyRate, months } = input;
-  const isZeroRate: boolean = isEffectivelyZeroRate(monthlyRate);
-
-  const rawMonthlyPayment: number = isZeroRate
-    ? principal / months
-    : principal *
-      (monthlyRate /
-        (1 - Math.pow(1 + monthlyRate, -months)));
+  const rawMonthlyPayment: number = calculateRawMonthlyPayment(
+    principal,
+    monthlyRate,
+    months,
+  );
 
   const monthlyPayment: number = roundCurrency(rawMonthlyPayment);
-  const totalPaid: number = roundCurrency(monthlyPayment * months);
+  const totalPaid: number = roundCurrency(rawMonthlyPayment * months);
   const totalInterest: number = roundCurrency(totalPaid - principal);
 
   return {
